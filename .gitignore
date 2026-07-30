@@ -5,7 +5,7 @@ target/
 .kotlin
 
 
-*.gitignore
+.gitignore
 *.xml
 ### IntelliJ IDEA ###
 .idea/modules.xml
