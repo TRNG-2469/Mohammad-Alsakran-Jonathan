@@ -76,7 +76,6 @@ public class UsersDAOImpl implements UsersDAO{
                 Users user = new Users();
                 user.setUser_id(resultSet.getInt("user_id"));
                 user.setUsername(resultSet.getString("username"));
-                user.setPassword(resultSet.getString("password"));
                 user.setRole(resultSet.getBoolean("role"));
                 user.setFirst_name(resultSet.getString("first_name"));
                 user.setLast_name(resultSet.getString("last_name"));
@@ -90,7 +89,7 @@ public class UsersDAOImpl implements UsersDAO{
     }
 
     @Override
-    public List<Users> findAll() { //no password, apply to other methods if successful
+    public List<Users> findAll() { //no password, for security
         String findAllSQL = "SELECT * FROM Users";
         List<Users> mylist = new ArrayList<>();
         try(Connection conn = ConnectionFactory.getInstance().getConnection();
@@ -100,7 +99,6 @@ public class UsersDAOImpl implements UsersDAO{
                 Users user = new Users();
                 user.setUser_id(resultSet.getInt("user_id"));
                 user.setUsername(resultSet.getString("username"));
-                user.setPassword(resultSet.getString("password"));
                 user.setRole(resultSet.getBoolean("role"));
                 user.setFirst_name(resultSet.getString("first_name"));
                 user.setLast_name(resultSet.getString("last_name"));
