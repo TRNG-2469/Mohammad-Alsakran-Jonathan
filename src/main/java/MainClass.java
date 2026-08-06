@@ -35,7 +35,21 @@ public class MainClass {
         UsersController userController = new UsersController();
         Javalin app = Javalin.create().start(7700);
 
+
+        //1. Retrieve all Users
+        app.get("/api/Users", userController::getAllUsers);
+
+        //2. Retrieve User based on id
+        app.get("/api/Users/{id}", userController::getUserByID);
+
+        //3. POST user data - create
         app.post("/api/Users", userController::createUser);
+
+        //4. UPDATE user data
+        app.put("api/Users/{id}", userController::updateUser);
+
+        //5. Delete  user data
+        app.delete("/api/Users/{id}", userController::deleteUser);
 
         app.exception(IllegalArgumentException.class,( e, ctx) -> {
             ctx.status(400);
