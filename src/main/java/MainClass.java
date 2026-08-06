@@ -1,11 +1,14 @@
+import Controller.UsersController;
 import Dao.UsersDAO;
 import Dao.UsersDAOImpl;
 import Model.Users;
+import exceptions.ErrorResponse;
+import io.javalin.Javalin;
 
 public class MainClass {
     public static void main(String[] args) {
         /*
-
+            //Main -> Controller -> Service -> DAO -> DB
         //Create
         UsersDAO userDAO = new UsersDAOImpl();
 
@@ -20,13 +23,28 @@ public class MainClass {
         Users user = new Users(2, "SecondUser", "password3", false, "Second","User", 1);
         userDAO.update(user);
 
-
+        //Delete
+        UsersDAO userDAO = new UsersDAOImpl();
+        userDAO.delete(2);
 
         //FindAll
         UsersDAO userDAO = new UsersDAOImpl();
         System.out.println(userDAO.findAll());
          */
-        UsersDAO userDAO = new UsersDAOImpl();
-        userDAO.delete(2);
+
+        UsersController userController = new UsersController();
+        Javalin app = Javalin.create().start(7700);
+
+        app.post("/api/Users", userController::createUser);
+
+        app.exception(IllegalArgumentException.class,( e, ctx) -> {
+            ctx.status(400);
+            ctx.json(new ErrorResponse("An unexpected Error occured."));
+        });
+
+        app.exception(Exception.class, (e, ctx) -> {
+            ctx.status(500);
+            ctx.json(new ErrorResponse("An unexpected Server Error occured."));
+        });
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 
 public class UsersDAOImpl implements UsersDAO{
     @Override
-    public void create(Users user) {
+    public Users create(Users user) {
         String createSQL = "INSERT INTO Users (user_id, username, password, role, first_name, last_name, department_id) values(?, ?, ?, ?, ?, ?, ?)";
 
         try(Connection conn = ConnectionFactory.getInstance().getConnection();
@@ -28,6 +28,7 @@ public class UsersDAOImpl implements UsersDAO{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return user;
     }
 
     @Override

@@ -1,12 +1,12 @@
-package Dao;
+package Service;
 
 import Model.Users;
 
 import java.util.List;
 
-public interface UsersDAO {
+public interface UsersService {
     Users create(Users user);
-    void update(Users user);
+    Users update(Users user);
     void delete(int id);
 
     Users findById(int id);
