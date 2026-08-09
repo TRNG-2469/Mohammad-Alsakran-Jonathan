@@ -12,19 +12,21 @@ import java.util.List;
 public class UsersDAOImpl implements UsersDAO{
     @Override
     public Users create(Users user) {
-        String createSQL = "INSERT INTO Users (user_id, username, password, role, first_name, last_name, department_id) values(?, ?, ?, ?, ?, ?, ?)";
+        String createSQL = "INSERT INTO Users (username, password, role, first_name, last_name, department_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING user_id";
 
-        try(Connection conn = ConnectionFactory.getInstance().getConnection();
-            PreparedStatement prepStatement = conn.prepareStatement(createSQL))
-        {
-            prepStatement.setInt(1, user.getUser_id());
-            prepStatement.setString(2, user.getUsername());
-            prepStatement.setString(3, user.getPassword());
-            prepStatement.setBoolean(4, user.isRole());
-            prepStatement.setString(5, user.getFirst_name());
-            prepStatement.setString(6, user.getLast_name());
-            prepStatement.setInt(7, user.getDepartment_id());
-            prepStatement.executeUpdate();
+        try (Connection conn = ConnectionFactory.getInstance().getConnection();
+             PreparedStatement prepStatement = conn.prepareStatement(createSQL)) {
+            prepStatement.setString(1, user.getUsername());
+            prepStatement.setString(2, user.getPassword());
+            prepStatement.setBoolean(3, user.isRole());
+            prepStatement.setString(4, user.getFirst_name());
+            prepStatement.setString(5, user.getLast_name());
+            prepStatement.setInt(6, user.getDepartment_id());
+
+            var rs = prepStatement.executeQuery();
+            if (rs.next()) {
+                user.setUser_id(rs.getInt("user_id"));
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

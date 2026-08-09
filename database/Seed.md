@@ -3,10 +3,10 @@
 -- (Users references Department; Reimbursements references Users)
 
 -- Departments
-insert into Department (department_id, name) values
-(1, 'IT'),
-(2, 'Sales'),
-(3, 'Finance');
+insert into Department (name) values
+('IT'),
+('Sales'),
+('Finance');
 
 -- Users
 -- role: true = Manager, false = Employee

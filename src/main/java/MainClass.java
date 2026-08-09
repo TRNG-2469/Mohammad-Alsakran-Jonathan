@@ -1,3 +1,4 @@
+import Controller.DepartmentController;
 import Controller.UsersController;
 import Dao.UsersDAO;
 import Dao.UsersDAOImpl;
@@ -33,6 +34,7 @@ public class MainClass {
          */
 
         UsersController userController = new UsersController();
+        DepartmentController departmentController = new DepartmentController();
         Javalin app = Javalin.create().start(7700);
 
 
@@ -46,17 +48,31 @@ public class MainClass {
         app.post("/api/Users", userController::createUser);
 
         //4. UPDATE user data
-        app.put("api/Users/{id}", userController::updateUser);
+        app.put("/api/Users/{id}", userController::updateUser);
 
         //5. Delete  user data
         app.delete("/api/Users/{id}", userController::deleteUser);
 
+
+        //~~~~~~~~~~~~~~~~~~~~~~Department Routes~~~~~~~~~~~~~~~~~~~~~
+
+        //1. Retrieve all Departments
+        app.get("/api/Departments", departmentController::getAllDepartments);
+
+        //2. Retrieve Department based on id
+        app.get("/api/Departments/{id}", departmentController::getDepartmentById);
+
+        //3. POST Department data - create
+        app.post("/api/Departments", departmentController::createDepartment);
+
         app.exception(IllegalArgumentException.class,( e, ctx) -> {
+            e.printStackTrace();
             ctx.status(400);
             ctx.json(new ErrorResponse("An unexpected Error occured."));
         });
 
         app.exception(Exception.class, (e, ctx) -> {
+            e.printStackTrace();
             ctx.status(500);
             ctx.json(new ErrorResponse("An unexpected Server Error occured."));
         });
