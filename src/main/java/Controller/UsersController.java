@@ -2,6 +2,7 @@ package Controller;
 
 import Model.Users;
 import Service.UsersServiceImpl;
+import exceptions.ErrorResponse;
 import io.javalin.http.Context;
 
 public class UsersController {
@@ -40,4 +41,18 @@ public class UsersController {
         userService.delete(id);
         ctx.status(204);
     }
+
+    public void logIn(Context ctx){
+        Users payload = ctx.bodyAsClass(Users.class);
+        Users user = userService.logIn(payload.getUsername(), payload.getPassword());
+        if(user != null){
+            ctx.status(200);
+            ctx.json(user);
+        } else {
+            ctx.status(401);
+            ctx.json(new ErrorResponse("Invalid username or password"));
+        }
+    }
+
+
 }

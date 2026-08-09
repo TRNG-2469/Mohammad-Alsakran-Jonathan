@@ -36,6 +36,16 @@ public class UsersServiceImpl implements UsersService{
     }
 
     @Override
+    public Users findByUsername(String username) {
+        if(username == null || username.isEmpty()){
+            throw new IllegalArgumentException("Username cannot be null or empty.");
+        }
+        return userDAO.findByUsername(username);
+    }
+
+
+
+    @Override
     public Users findById(int id) {
         if(id <= 0){
             throw new IllegalArgumentException("ID cannot be <= 0");
@@ -47,4 +57,16 @@ public class UsersServiceImpl implements UsersService{
     public List<Users> findAll() {
         return userDAO.findAll();
     }
+
+    @Override
+    public Users logIn(String username, String password) {
+        Users user = userDAO.findByUsername(username);
+        if (user != null && user.getPassword().equals(password)) {
+            user.setPassword(null);
+            return user;
+        }
+        return null;
+    }
+
+
 }

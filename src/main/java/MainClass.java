@@ -65,6 +65,10 @@ public class MainClass {
         //3. POST Department data - create
         app.post("/api/Departments", departmentController::createDepartment);
 
+        //~~~~~~~~~~~~~~~~~~~~~~Login Route~~~~~~~~~~~~~~~~~~~~~
+
+        app.post("/api/login", userController::logIn);
+
         app.exception(IllegalArgumentException.class,( e, ctx) -> {
             e.printStackTrace();
             ctx.status(400);

@@ -8,7 +8,7 @@ public interface UsersDAO {
     Users create(Users user);
     void update(Users user);
     void delete(int id);
-
+    Users findByUsername(String username);
     Users findById(int id);
     List<Users> findAll();
 }
