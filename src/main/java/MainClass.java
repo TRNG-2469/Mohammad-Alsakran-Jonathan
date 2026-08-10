@@ -55,6 +55,8 @@ public class MainClass {
         //5. Delete  user data
         app.delete("/api/Users/{id}", userController::deleteUser);
 
+        //6. Logout (I guess i'ts a user endpoint?)
+        app.post("/api/logout", userController::logOut);
 
         //~~~~~~~~~~~~~~~~~~~~~~Department Routes~~~~~~~~~~~~~~~~~~~~~
 
@@ -96,6 +98,16 @@ public class MainClass {
         //7. Retrieve Reimbursement based on author id
         app.get("/api/Reimbursements/author/{id}", reimbursementController::getReimbursementByAuthor);
 
+
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Session Role-check Middlewear~~~~~~~~~~~~~~~~~~~~~~~~~
+        app.before("/api/Reimbursements/{id}/resolve", ctx -> {
+            Boolean role = ctx.sessionAttribute("role");
+            if (role == null || !role) {
+                ctx.status(403);
+                ctx.json(new ErrorResponse("Only managers can resolve reimbursements."));
+                ctx.skipRemainingHandlers();
+            }
+        });
 
 
         app.exception(IllegalArgumentException.class,( e, ctx) -> {

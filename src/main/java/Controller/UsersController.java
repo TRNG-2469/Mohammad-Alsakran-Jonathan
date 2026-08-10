@@ -42,16 +42,27 @@ public class UsersController {
     }
 
     public void logIn(Context ctx){
-        Users payload = ctx.bodyAsClass(Users.class);
-        Users user = userService.logIn(payload.getUsername(), payload.getPassword());
+        var credentials = ctx.basicAuthCredentials();
+        Users user = userService.logIn(credentials.getUsername(), credentials.getPassword());
         if(user != null){
             ctx.status(200);
+            ctx.sessionAttribute("user_id", user.getUser_id());
+            ctx.sessionAttribute("role", user.isRole());
             ctx.json(user);
         } else {
             ctx.status(401);
             ctx.json(new ErrorResponse("Invalid username or password"));
         }
     }
+
+    public void logOut(Context ctx){
+        ctx.sessionAttribute("user_id", null);
+        ctx.sessionAttribute("role", null);
+    }
+
+
+
+
 
 
 }
