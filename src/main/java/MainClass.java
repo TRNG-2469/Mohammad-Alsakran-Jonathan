@@ -1,4 +1,5 @@
 import Controller.DepartmentController;
+import Controller.ReimbursementController;
 import Controller.UsersController;
 import Dao.UsersDAO;
 import Dao.UsersDAOImpl;
@@ -35,6 +36,7 @@ public class MainClass {
 
         UsersController userController = new UsersController();
         DepartmentController departmentController = new DepartmentController();
+        ReimbursementController reimbursementController = new ReimbursementController();
         Javalin app = Javalin.create().start(7700);
 
 
@@ -65,9 +67,33 @@ public class MainClass {
         //3. POST Department data - create
         app.post("/api/Departments", departmentController::createDepartment);
 
-        //~~~~~~~~~~~~~~~~~~~~~~Login Route~~~~~~~~~~~~~~~~~~~~~
+        //~~~~~~~~~~~~~~~~~~~~~~Login Route~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         app.post("/api/login", userController::logIn);
+
+
+        //~~~~~~~~~~~~~~~~~~~~~~Reimbursement Route~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        //1. Retrieve all Reimbursements
+        app.get("/api/Reimbursements", reimbursementController::getAllReimbursements);
+
+        //2. Retrieve Reimbursement based on id
+        app.get("/api/Reimbursements/{id}", reimbursementController::getReimbursementByID);
+
+        //3. POST Reimbursement data - create
+        app.post("/api/Reimbursements", reimbursementController::createReimbursement);
+
+        //4. UPDATE Reimbursement data
+        app.put("/api/Reimbursements/{id}", reimbursementController::updateReimbursement);
+
+        //5. Resolve Reimbursement data
+        app.put("/api/Reimbursements/{id}/resolve", reimbursementController::resolveReimbursement);
+
+        //6. Retrieve Reimbursement based on author id
+        app.get("/api/Reimbursements/author/{id}", reimbursementController::getReimbursementByAuthor);
+
+        //7. Retrieve Reimbursement based on status and department id
+        app.get("/api/Reimbursements/filter", reimbursementController::getReimbursementsByStatusAndDepartment);
 
         app.exception(IllegalArgumentException.class,( e, ctx) -> {
             e.printStackTrace();
