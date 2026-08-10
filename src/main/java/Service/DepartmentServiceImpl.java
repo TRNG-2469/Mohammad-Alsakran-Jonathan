@@ -10,6 +10,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentDAO departmentDAO = new DepartmentDAOImpl();
 
+
     @Override
     public Department create(Department department) {
         if (department == null || department.getName() == null || department.getName().trim().isEmpty()) {

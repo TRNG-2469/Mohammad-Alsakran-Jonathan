@@ -27,12 +27,11 @@ public class UsersController {
         int id = Integer.parseInt(ctx.pathParam("id"));
         Users payload = ctx.bodyAsClass(Users.class);
 
-        //make a check for null
-       // if(payload.getName() == null || payload.getSalary() <= 0){
-         //   throw new NullPointerException("Name cannot be null, salary cannot be <= 0");
-        //}
-        //password should not be updated?
-        Users updated = new Users(id, payload.getUsername(), payload.getPassword(), payload.isRole(), payload.getFirst_name(), payload.getLast_name(), payload.getDepartment_id());
+        // password is intentionally excluded from general updates.
+        // UsersDAOImpl.update() no longer touches the password column at all,
+        // so this field is ignored regardless of what's passed here.
+        // Password changes require a dedicated reset flow, not built yet.
+        Users updated = new Users(id, payload.getUsername(), null, payload.isRole(), payload.getFirst_name(), payload.getLast_name(), payload.getDepartment_id());
         ctx.json(userService.update(updated));
     }
 
@@ -43,16 +42,27 @@ public class UsersController {
     }
 
     public void logIn(Context ctx){
-        Users payload = ctx.bodyAsClass(Users.class);
-        Users user = userService.logIn(payload.getUsername(), payload.getPassword());
+        var credentials = ctx.basicAuthCredentials();
+        Users user = userService.logIn(credentials.getUsername(), credentials.getPassword());
         if(user != null){
             ctx.status(200);
+            ctx.sessionAttribute("user_id", user.getUser_id());
+            ctx.sessionAttribute("role", user.isRole());
             ctx.json(user);
         } else {
             ctx.status(401);
             ctx.json(new ErrorResponse("Invalid username or password"));
         }
     }
+
+    public void logOut(Context ctx){
+        ctx.sessionAttribute("user_id", null);
+        ctx.sessionAttribute("role", null);
+    }
+
+
+
+
 
 
 }
