@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Approvals</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+
+    <!--Navigate to tabs -->
+        <nav class="tabs" aria-label="Sections">
+            <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
+            <a class="tab" href="my-requests.html">My requests</a>
+            <a class="tab" href="approvals.html">Approvals</a>
+        </nav>
+
+    <!-- Title -->
+        <main id="main">
+            <section class="panel">
+                <div class="panel-head">
+                    <h1>Approvals</h1>
+                    <p class="panel-sub">Requests waiting on your decision, across your team.</p>
+                </div>
+            </section>
+        </main>
+
+    </body>
+</html>
+<!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)
+2. Finish the implementation. Display every record in Reimbursements where status is 'PENDING'. below each record
+have 2 buttons, 'deny' and 'accept'. after either button is pushed change the status to either 'APPROVED' or 'DENIED' based on which button was
+pressed

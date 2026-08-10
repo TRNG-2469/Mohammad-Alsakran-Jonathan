@@ -1,0 +1,439 @@
+
+/* ==========================================================================
+   Ledgerline — design tokens
+   Palette: aged ledger paper, deep account-book green, ink, rubber-stamp red
+   and amber for pending. Display type is Fraunces (a stamped, legal-document
+   voice); UI text is IBM Plex Sans; money/ids are IBM Plex Mono.
+
+   No JavaScript is used anywhere in this project. Every visual state below
+   (which nav tab is active, which stamp color shows, etc.) is driven by
+   attributes/classes that your Java backend sets when it renders the page
+   (e.g. aria-current="page" on the current page's link, or
+   data-status="APPROVED" on a stamp) — not by client-side script toggling
+   things after the page loads.
+   ========================================================================== */
+
+:root {
+    --paper: #F6F3EA;
+    --paper-raised: #FFFDF8;
+    --ink: #20281F;
+    --ink-soft: #5B6259;
+    --green: #1F5C4A;
+    --green-dark: #123B2F;
+    --red: #A5352A;
+    --amber: #A9761F;
+    --line: #DED6C2;
+    --line-strong: #C7BC9F;
+    --focus: #2F7A63;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --shadow-card: 0 1px 0 var(--line-strong), 0 8px 20px -14px rgba(32, 40, 31, 0.35);
+
+    --font-display: "Fraunces", "Iowan Old Style", serif;
+    --font-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    background: var(--paper);
+    background-image:
+            linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 42px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+}
+
+:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.skip-link { position: absolute; left: -9999px; top: 0; background: var(--green); color: #fff; padding: 10px 16px; z-index: 100; }
+.skip-link:focus { left: 12px; top: 12px; }
+
+/* ---------------------------------- header --------------------------------- */
+
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px clamp(16px, 5vw, 48px) 18px;
+    border-bottom: 2px solid var(--ink);
+}
+
+.brand { display: flex; align-items: baseline; gap: 10px; }
+
+.brand-mark {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--green);
+    line-height: 1;
+}
+
+.brand-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    letter-spacing: 0.01em;
+}
+
+.whoami { display: flex; align-items: center; gap: 12px; }
+
+.whoami-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3; }
+
+.whoami-name { font-weight: 600; font-size: 0.95rem; }
+
+.whoami-dept { font-size: 0.8rem; color: var(--ink-soft); }
+
+.role-chip {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--green-dark);
+    background: transparent;
+    border: 1.5px solid var(--green);
+    padding: 4px 9px;
+    border-radius: 999px;
+    transform: rotate(-2deg);
+}
+
+/* ---------------------------------- tabs ----------------------------------- */
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 14px clamp(16px, 5vw, 48px) 0;
+    overflow-x: auto;
+}
+
+.tab {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 6px 12px;
+    margin-right: 22px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tab:hover { color: var(--ink); }
+
+.tab[aria-current="page"] {
+    color: var(--green-dark);
+    border-bottom-color: var(--green);
+}
+
+/* ---------------------------------- layout --------------------------------- */
+
+main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px clamp(16px, 5vw, 48px) 80px;
+}
+
+.panel-head { margin-bottom: 24px; }
+
+.panel-head h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    margin: 0 0 6px;
+}
+
+.panel-sub { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+/* ---------------------------------- form ------------------------------------ */
+
+.request-form {
+    background: var(--paper-raised);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: clamp(18px, 4vw, 28px);
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.field { margin-bottom: 18px; display: flex; flex-direction: column; }
+
+label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 7px;
+}
+
+input, select, textarea {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px;
+    width: 100%;
+}
+
+textarea { resize: vertical; font-family: var(--font-body); }
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--green);
+    background: var(--paper-raised);
+}
+
+.amount-input {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--paper);
+    padding-left: 12px;
+}
+
+.amount-input span {
+    font-family: var(--font-mono);
+    color: var(--ink-soft);
+}
+
+.amount-input:focus-within { border-color: var(--green); background: var(--paper-raised); }
+
+.amount-input input {
+    border: none;
+    background: transparent;
+    font-family: var(--font-mono);
+    padding-left: 4px;
+}
+
+.amount-input input:focus { outline: none; }
+
+.form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.form-status {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--green-dark);
+    min-height: 1.2em;
+}
+
+/* Add this class server-side (e.g. in a JSTL c:if) when showing a rejected/failed submission message. */
+.form-status.is-error { color: var(--red); }
+
+/* ---------------------------------- buttons ---------------------------------- */
+
+.btn {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: var(--radius-sm);
+    padding: 11px 20px;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+}
+
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:hover { background: var(--green-dark); }
+.btn-primary:disabled { background: var(--line-strong); cursor: not-allowed; }
+
+.btn-approve {
+    background: transparent;
+    color: var(--green-dark);
+    border-color: var(--green);
+}
+.btn-approve:hover { background: var(--green); color: #fff; }
+
+.btn-deny {
+    background: transparent;
+    color: var(--red);
+    border-color: var(--red);
+}
+.btn-deny:hover { background: var(--red); color: #fff; }
+
+/* ---------------------------------- receipt list ------------------------------ */
+
+.receipt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.receipt-card {
+    position: relative;
+    background: var(--paper-raised);
+    border: 1px solid var(--line-strong);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+/* torn-receipt perforation along the top edge */
+.receipt-perforation {
+    height: 10px;
+    background-image: radial-gradient(circle at 10px 0, var(--paper) 6px, transparent 6.5px);
+    background-size: 20px 10px;
+    background-repeat: repeat-x;
+    background-position: -4px 0;
+}
+
+.receipt-body { padding: 18px 20px 20px; }
+
+.receipt-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.receipt-type {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+
+.receipt-amount {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 1.15rem;
+}
+
+.receipt-description {
+    margin: 0 0 12px;
+    color: var(--ink);
+    font-size: 0.95rem;
+}
+
+.receipt-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    border-top: 1px dashed var(--line-strong);
+    padding-top: 10px;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+/* rubber-stamp status badge, overlapping the card corner */
+.stamp {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border: 2px solid currentColor;
+    border-radius: 4px;
+    transform: rotate(-8deg);
+    mix-blend-mode: multiply;
+}
+
+.stamp[data-status="PENDING"] { color: var(--amber); }
+.stamp[data-status="APPROVED"] { color: var(--green); }
+.stamp[data-status="DENIED"] { color: var(--red); }
+
+/* ---------------------------------- empty state -------------------------------- */
+
+.empty-state {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 40px 20px;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: var(--radius-md);
+}
+
+/* ---------------------------------- utility ------------------------------------ */
+
+[hidden] { display: none !important; }
+
+/* ---------------------------------- responsive --------------------------------- */
+
+@media (max-width: 560px) {
+    .site-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .whoami { align-self: stretch; justify-content: space-between; }
+    .whoami-text { align-items: flex-start; }
+    .field-row { grid-template-columns: 1fr; gap: 0; }
+    .receipt-top { flex-direction: column; align-items: flex-start; gap: 2px; }
+}
+
+
+.site-header.auth-header { justify-content: center; }
+
+.auth-main {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 56px clamp(16px, 5vw, 48px) 80px;
+}
+/* ---------------------------------- auth pages ------------------------------- */
+.auth-head { text-align: center; margin-bottom: 26px; }
+
+.auth-head h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    margin: 0 0 6px;
+}
+
+.auth-head p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+.auth-switch {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.auth-switch a {
+    color: var(--green-dark);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-underline-offset: 3px;
+}
+
+.field-hint {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+}

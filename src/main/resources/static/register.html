@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Register</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+<body>
+    <!-- Nav to Login -->
+    <nav>
+        <p class="auth-switch">Already have an account? <a href="login.html">Sign in</a>.</p>
+    </nav>
+    <!-- Title -->
+    <main id="main" class="auth-main">
+        <div class="auth-head">
+            <h1>Create your account</h1>
+            <p>Set up access to file and track your reimbursements.</p>
+        </div>
+
+        <p class="form-status is-error" hidden>That username is already taken.</p>
+
+        <form class="form-card" action="/register" method="post" novalidate>
+            <!-- Username -->
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" maxlength="30" autocomplete="username" required>
+                <p class="field-hint">Up to 30 characters. Must be unique.</p>
+            </div>
+
+            <!-- First Name -->
+            <div class="field-row">
+                <div class="field">
+                    <label for="first_name">First name</label>
+                    <input type="text" id="first_name" name="first_name" maxlength="30" autocomplete="given-name" required>
+                </div>
+
+                <!-- Last Name -->
+                <div class="field">
+                    <label for="last_name">Last name</label>
+                    <input type="text" id="last_name" name="last_name" maxlength="30" autocomplete="family-name" required>
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="field-row">
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="new-password" required>
+                </div>
+                <!-- Confirm Password -->
+                <div class="field">
+                    <label for="confirm_password">Confirm password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required>
+                </div>
+            </div>
+
+            <!-- Department -->
+            <div class="field">
+                <label for="department_id">Department</label>
+                <select id="department_id" name="department_id" required>
+                    <option value="" disabled selected>Choose a department</option>
+                    <option value="1">Engineering</option>
+                    <option value="2">Sales</option>
+                    <option value="3">Marketing</option>
+                    <option value="4">Human Resources</option>
+                    <option value="5">Finance</option>
+                </select>
+            </div>
+
+            <!-- Create Account -->
+            <div class="form-footer">
+                <span></span>
+                <button type="submit" class="btn btn-primary">Create account</button>
+            </div>
+        </form>
+    </main>
+</body>
+</html>
+<!-- 1. the options under department should be from the Department table (name)
+2. If the given username exists in the Users table, should return "That username is already taken." without changing the database
+and without redirecting the user. If every field is filled, and the username is unique, create a new record in the Users table
+and redirect the user to reimbursements.html -->
