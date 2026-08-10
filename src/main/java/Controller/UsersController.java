@@ -27,12 +27,11 @@ public class UsersController {
         int id = Integer.parseInt(ctx.pathParam("id"));
         Users payload = ctx.bodyAsClass(Users.class);
 
-        //make a check for null
-       // if(payload.getName() == null || payload.getSalary() <= 0){
-         //   throw new NullPointerException("Name cannot be null, salary cannot be <= 0");
-        //}
-        //password should not be updated?
-        Users updated = new Users(id, payload.getUsername(), payload.getPassword(), payload.isRole(), payload.getFirst_name(), payload.getLast_name(), payload.getDepartment_id());
+        // password is intentionally excluded from general updates.
+        // UsersDAOImpl.update() no longer touches the password column at all,
+        // so this field is ignored regardless of what's passed here.
+        // Password changes require a dedicated reset flow, not built yet.
+        Users updated = new Users(id, payload.getUsername(), null, payload.isRole(), payload.getFirst_name(), payload.getLast_name(), payload.getDepartment_id());
         ctx.json(userService.update(updated));
     }
 

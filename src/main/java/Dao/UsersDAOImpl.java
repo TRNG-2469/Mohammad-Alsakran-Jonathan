@@ -35,18 +35,17 @@ public class UsersDAOImpl implements UsersDAO{
 
     @Override
     public void update(Users user) {
-        String updateSQL = "UPDATE Users SET username=?, password=?, role=?, first_name=?, last_name = ?, department_id = ? WHERE user_id=?";
+        String updateSQL = "UPDATE Users SET username=?, role=?, first_name=?, last_name = ?, department_id = ? WHERE user_id=?";
 
         try(Connection conn = ConnectionFactory.getInstance().getConnection();
             PreparedStatement prepStatement = conn.prepareStatement(updateSQL))
         {
             prepStatement.setString(1, user.getUsername());
-            prepStatement.setString(2, user.getPassword());
-            prepStatement.setBoolean(3, user.isRole());
-            prepStatement.setString(4, user.getFirst_name());
-            prepStatement.setString(5, user.getLast_name());
-            prepStatement.setInt(6, user.getDepartment_id());
-            prepStatement.setInt(7, user.getUser_id());
+            prepStatement.setBoolean(2, user.isRole());
+            prepStatement.setString(3, user.getFirst_name());
+            prepStatement.setString(4, user.getLast_name());
+            prepStatement.setInt(5, user.getDepartment_id());
+            prepStatement.setInt(6, user.getUser_id());
             prepStatement.executeUpdate();
         }catch(SQLException e){
             throw new RuntimeException(e);

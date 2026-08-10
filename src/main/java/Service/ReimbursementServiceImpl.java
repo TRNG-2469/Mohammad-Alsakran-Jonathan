@@ -6,15 +6,24 @@ import Model.Reimbursement;
 
 import java.math.BigDecimal;
 import java.util.List;
+import Dao.UsersDAO;
+import Dao.UsersDAOImpl;
+import Model.Users;
 
 public class ReimbursementServiceImpl implements ReimbursementService {
 
+    private final UsersDAO userDAO = new UsersDAOImpl();
+    private static final int MAX_DESCRIPTION_LENGTH = 500;
     private final ReimbursementDAO reimbursementDAO = new ReimbursementDAOImpl();
+    private static final BigDecimal MAX_AMOUNT = new BigDecimal("10000.00");
 
     @Override
     public Reimbursement create(Reimbursement reimbursement) {
         if (reimbursement.getAmount() == null || reimbursement.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than 0.");
+        }
+        if (reimbursement.getAmount().compareTo(MAX_AMOUNT) > 0) {
+            throw new IllegalArgumentException("Amount cannot exceed $10,000.00.");
         }
         if (reimbursement.getDescription() == null || reimbursement.getDescription().isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty.");
@@ -22,6 +31,9 @@ public class ReimbursementServiceImpl implements ReimbursementService {
         String type = reimbursement.getType();
         if (type == null || !(type.equals("TRAVEL") || type.equals("FOOD") || type.equals("LODGING") || type.equals("OTHER"))) {
             throw new IllegalArgumentException("Type must be one of: TRAVEL, FOOD, LODGING, OTHER.");
+        }
+        if (reimbursement.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
+            throw new IllegalArgumentException("Description cannot exceed 500 characters.");
         }
 
         reimbursement.setStatus("PENDING");
@@ -52,6 +64,10 @@ public class ReimbursementServiceImpl implements ReimbursementService {
 
         if (reimbursement.getAmount() == null || reimbursement.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than 0.");
+
+        }
+        if (reimbursement.getAmount().compareTo(MAX_AMOUNT) > 0) {
+            throw new IllegalArgumentException("Amount cannot exceed $10,000.00.");
         }
         if (reimbursement.getDescription() == null || reimbursement.getDescription().isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty.");
@@ -59,6 +75,9 @@ public class ReimbursementServiceImpl implements ReimbursementService {
         String type = reimbursement.getType();
         if (type == null || !(type.equals("TRAVEL") || type.equals("FOOD") || type.equals("LODGING") || type.equals("OTHER"))) {
             throw new IllegalArgumentException("Type must be one of: TRAVEL, FOOD, LODGING, OTHER.");
+        }
+        if (reimbursement.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
+            throw new IllegalArgumentException("Description cannot exceed 500 characters.");
         }
 
         reimbursementDAO.update(reimbursement);
@@ -94,6 +113,10 @@ public class ReimbursementServiceImpl implements ReimbursementService {
         }
         if (reimbursement.getResolver_id() == null || reimbursement.getResolver_id() <= 0) {
             throw new IllegalArgumentException("Resolver ID must be a valid positive integer.");
+        }
+        Users resolver = userDAO.findById(reimbursement.getResolver_id());
+        if (resolver == null || !resolver.isRole()) {
+            throw new IllegalArgumentException("Resolver must be a valid manager.");
         }
 
         reimbursementDAO.resolve(reimbursement);
