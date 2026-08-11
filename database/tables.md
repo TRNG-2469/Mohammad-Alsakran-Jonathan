@@ -24,5 +24,5 @@ amount numeric(10,2) not null,
 description text,
 type varchar(20) not null,
 resolver_id int references Users(user_id),
-author_id int references Users(user_id)
+author_id int references Users(user_id) not null
 );

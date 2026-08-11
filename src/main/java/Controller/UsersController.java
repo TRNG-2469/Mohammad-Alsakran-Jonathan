@@ -13,7 +13,13 @@ public class UsersController {
     }
     public void getUserByID(Context ctx){
         int id = Integer.parseInt(ctx.pathParam("id"));
-        ctx.json(userService.findById(id));
+        Users user = userService.findById(id);
+        if (user == null) {
+            ctx.status(404);
+            ctx.json(new ErrorResponse("User not found."));
+            return;
+        }
+        ctx.json(user);
     }
 
     public void createUser(Context ctx){

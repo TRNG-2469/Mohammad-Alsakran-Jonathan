@@ -22,6 +22,9 @@ public class ReimbursementServiceImpl implements ReimbursementService {
         if (reimbursement.getAmount() == null || reimbursement.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than 0.");
         }
+        if (reimbursement.getAuthor_id() <= 0) {
+            throw new IllegalArgumentException("Author ID must be a valid positive integer.");
+        }
         if (reimbursement.getAmount().compareTo(MAX_AMOUNT) > 0) {
             throw new IllegalArgumentException("Amount cannot exceed $10,000.00.");
         }

@@ -6,8 +6,11 @@ import Dao.UsersDAOImpl;
 import Model.Users;
 import exceptions.ErrorResponse;
 import io.javalin.Javalin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MainClass {
+    private static final Logger logger = LoggerFactory.getLogger(MainClass.class);
     public static void main(String[] args) {
         /*
             //Main -> Controller -> Service -> DAO -> DB
@@ -33,6 +36,7 @@ public class MainClass {
         UsersDAO userDAO = new UsersDAOImpl();
         System.out.println(userDAO.findAll());
          */
+
 
         UsersController userController = new UsersController();
         DepartmentController departmentController = new DepartmentController();
@@ -111,13 +115,14 @@ public class MainClass {
 
 
         app.exception(IllegalArgumentException.class,( e, ctx) -> {
-            e.printStackTrace();
+
+            logger.warn("Validation error", e);
             ctx.status(400);
             ctx.json(new ErrorResponse("An unexpected Error occured."));
         });
 
         app.exception(Exception.class, (e, ctx) -> {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             ctx.status(500);
             ctx.json(new ErrorResponse("An unexpected Server Error occured."));
         });

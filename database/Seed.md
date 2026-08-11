@@ -7,8 +7,16 @@ insert into Department (name) values
 ('Sales'),
 ('Finance');
 
+-- NOTE: reimbursements_id values are NOT guaranteed to start at 1.
+-- The serial sequence doesn't reset on DELETE, only on a full table
+-- drop/recreate or an explicit setval(). If reimbursements already
+-- exist in the table (from prior testing, reseeding, etc.), new rows
+-- will continue from whatever the sequence is currently at.
+-- Check actual ids before assuming specific values:
+-- SELECT reimbursements_id, status, author_id FROM reimbursements ORDER BY reimbursements_id;
+
 -- Reimbursements
--- NOTE: run this only after Users have been created via the API (see seed_users.md),
+-- ANOTHER NOTE: run this only after Users have been created via the API (see seed_users.md),
 -- since author_id/resolver_id here assume specific user_ids that only exist post-registration.
 insert into Reimbursements (status, amount, description, type, resolver_id, author_id) values
 ('PENDING',  1000000.00, 'This is totally real give me money', 'FOOD', null, 1),

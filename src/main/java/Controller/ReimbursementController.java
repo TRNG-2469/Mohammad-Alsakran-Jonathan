@@ -3,7 +3,9 @@ package Controller;
 import Model.Reimbursement;
 import Service.ReimbursementService;
 import Service.ReimbursementServiceImpl;
+import exceptions.ErrorResponse;
 import io.javalin.http.Context;
+import org.jetbrains.annotations.NotNull;
 
 public class ReimbursementController {
     private final ReimbursementService reimbursementService = new ReimbursementServiceImpl();
@@ -19,9 +21,16 @@ public class ReimbursementController {
 
         ctx.json(reimbursementService.findAll());
     }
+
     public void getReimbursementByID(Context ctx){
         int id = Integer.parseInt(ctx.pathParam("id"));
-        ctx.json(reimbursementService.findById(id));
+        Reimbursement reimbursement = reimbursementService.findById(id);
+        if (reimbursement == null) {
+            ctx.status(404);
+            ctx.json(new ErrorResponse("Reimbursement not found."));
+            return;
+        }
+        ctx.json(reimbursement);
     }
 
 
@@ -35,8 +44,11 @@ public class ReimbursementController {
 
     public void resolveReimbursement(Context ctx){
         int id = Integer.parseInt(ctx.pathParam("id"));
+
         Reimbursement payload = ctx.bodyAsClass(Reimbursement.class);
         payload.setReimbursements_id(id);
+        Integer resolverId = ctx.sessionAttribute("user_id");
+        payload.setResolver_id(resolverId)  ;
         reimbursementService.resolve(payload);
         ctx.json(payload);
     }

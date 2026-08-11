@@ -4,6 +4,7 @@ package Controller;
 import Model.Department;
 import Service.DepartmentService;
 import Service.DepartmentServiceImpl;
+import exceptions.ErrorResponse;
 import io.javalin.http.Context;
 
 public class DepartmentController {
@@ -15,7 +16,13 @@ public class DepartmentController {
     }
     public void getDepartmentById(Context ctx){
         int id = Integer.parseInt(ctx.pathParam("id"));
-        ctx.json(departmentService.findById(id));
+        Department department = departmentService.findById(id);
+        if (department == null) {
+            ctx.status(404);
+            ctx.json(new ErrorResponse("Department not found."));
+            return;
+        }
+        ctx.json(department);
     }
 
     public void createDepartment(Context ctx){
