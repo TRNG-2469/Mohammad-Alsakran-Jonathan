@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Expense Reimbursements</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+
+        <!--Navigate to tabs -->
+        <nav class="tabs" aria-label="Sections">
+            <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
+            <a class="tab" href="my-requests.html">My requests</a>
+            <a class="tab" href="approvals.html">Approvals</a>
+        </nav>
+
+        <!-- Title -->
+        <main id="main">
+        <section class="panel">
+            <div class="panel-head">
+                <h1>File a reimbursement</h1>
+                <p class="panel-sub">Fill this out like a receipt. Your manager sees it the moment you submit.</p>
+            </div>
+
+            <!-- Amount of reimbursement -->
+            <form class="request-form" action="/reimbursements" method="post" novalidate>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="amount">Amount:</label>
+                        <div class="amount-input">
+                            <span aria-hidden="true">$</span>
+                            <input type="number" id="amount" name="amount" inputmode="decimal" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <!-- Reason for Reimbursement -->
+                    <div class="field">
+                        <label for="type">Reason for Reimbursement:</label>
+                        <select id="type" name="type" required>
+                            <option value="" disabled selected>Choose one</option>
+                            <option value="TRAVEL">Travel</option>
+                            <option value="MEALS">Meals</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Description of reimbursement -->
+                <div class="field">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" placeholder="What was this for? Add any detail your manager will need to approve it." required></textarea>
+                </div>
+
+                <!--Submit-->
+                <div class="form-footer">
+                    <p class="form-status"></p>
+                    <button type="submit" class="btn btn-primary">Submit request</button>
+                </div>
+            </form>
+        </section>
+        </main>
+    </body>
+</html>
+<!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)
+2. If the submit button is pressed and both required fields are filled, create a new reimbursement record. it should utilize the
+default status, amount is given, description is given or null, type is given, resolver_id is always null right now, author_id
+is the user_id of the current user. -->
