@@ -1,182 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Register</title>
-        <link rel="stylesheet" href="styles.css">
-        <script src="app.js" defer></script>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
 <body>
-    <!-- Nav to Login -->
-    <nav>
-        <p class="auth-switch">Already have an account? <a href="login.html">Sign in</a>.</p>
-    </nav>
-    <!-- Title -->
-    <main id="main" class="auth-main">
-        <div class="auth-head">
-            <h1>Create your account</h1>
-            <p>Set up access to file and track your reimbursements.</p>
+<!-- Nav to Login -->
+<nav>
+    <p class="auth-switch">Already have an account? <a href="login.html">Sign in</a>.</p>
+</nav>
+<!-- Title -->
+<main id="main" class="auth-main">
+    <div class="auth-head">
+        <h1>Create your account</h1>
+        <p>Set up access to file and track your reimbursements.</p>
+    </div>
+
+    <p class="form-status is-error" id="register-error" hidden>That username is already taken.</p>
+
+    <form class="form-card" id="register-form" action="#" method="post" novalidate>
+        <!-- Username -->
+        <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" maxlength="30" autocomplete="username" required>
+            <p class="field-hint">Up to 30 characters. Must be unique.</p>
         </div>
 
-        <p class="form-status is-error" hidden>That username is already taken.</p>
-
-        <form class="form-card" id="register-form" action="#" method="post" novalidate>
-            <!-- Username -->
+        <!-- First Name -->
+        <div class="field-row">
             <div class="field">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" maxlength="30" autocomplete="username" required>
-                <p class="field-hint">Up to 30 characters. Must be unique.</p>
+                <label for="first_name">First name</label>
+                <input type="text" id="first_name" name="first_name" maxlength="30" autocomplete="given-name" required>
             </div>
 
-            <!-- First Name -->
-            <div class="field-row">
-                <div class="field">
-                    <label for="first_name">First name</label>
-                    <input type="text" id="first_name" name="first_name" maxlength="30" autocomplete="given-name" required>
-                </div>
-
-                <!-- Last Name -->
-                <div class="field">
-                    <label for="last_name">Last name</label>
-                    <input type="text" id="last_name" name="last_name" maxlength="30" autocomplete="family-name" required>
-                </div>
-            </div>
-
-            <!-- Password -->
-            <div class="field-row">
-                <div class="field">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" autocomplete="new-password" required>
-                </div>
-                <!-- Confirm Password -->
-                <div class="field">
-                    <label for="confirm_password">Confirm password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required>
-                </div>
-            </div>
-
-            <!-- Department -->
+            <!-- Last Name -->
             <div class="field">
-                <label for="department_id">Department</label>
-                <select id="department_id" name="department_id" required>
-                    <option value="" disabled selected>Choose a department</option>
-
-
-                   <!-- <option value="1">Engineering</option>
-                    <option value="2">Sales</option>
-                    <option value="3">Marketing</option>
-                    <option value="4">Human Resources</option>
-                    <option value="5">Finance</option> -->
-                </select>
+                <label for="last_name">Last name</label>
+                <input type="text" id="last_name" name="last_name" maxlength="30" autocomplete="family-name" required>
             </div>
+        </div>
 
-            <!-- Create Account -->
-            <div class="form-footer">
-                <span></span>
-                <button type="submit" class="btn btn-primary">Create account</button>
+        <!-- Password -->
+        <div class="field-row">
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="new-password" required>
             </div>
-        </form>
-    </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', async function () {
-            if (getCurrentUser()) {
-                window.location.href = 'reimbursements.html';
+            <!-- Confirm Password -->
+            <div class="field">
+                <label for="confirm_password">Confirm password</label>
+                <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required>
+            </div>
+        </div>
+
+        <!-- Department -->
+        <div class="field">
+            <label for="department_id">Department</label>
+            <select id="department_id" name="department_id" required>
+                <option value="" disabled selected>Choose a department</option>
+
+
+                <!-- <option value="1">Engineering</option>
+                 <option value="2">Sales</option>
+                 <option value="3">Marketing</option>
+                 <option value="4">Human Resources</option>
+                 <option value="5">Finance</option> -->
+            </select>
+        </div>
+
+        <!-- Create Account -->
+        <div class="form-footer">
+            <span></span>
+            <button type="submit" class="btn btn-primary">Create account</button>
+        </div>
+    </form>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        if (getCurrentUser()) {
+            window.location.href = 'reimbursements.html';
+            return;
+        }
+
+        const errorEl = document.getElementById('register-error');
+        const form = document.getElementById('register-form');
+        const deptSelect = document.getElementById('department_id');
+
+        // 1. Populate department options from the Department table
+        try {
+            const result = await api('/Departments');
+            if (result.ok && Array.isArray(result.body)) {
+                // Keep the placeholder; append real rows
+                result.body.forEach(function (dept) {
+                    const opt = document.createElement('option');
+                    // Support either department_id or id field names from the model
+                    opt.value = dept.department_id != null ? dept.department_id : dept.id;
+                    opt.textContent = dept.name;
+                    deptSelect.appendChild(opt);
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load departments', err);
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            errorEl.hidden = true;
+
+            const username = document.getElementById('username').value.trim();
+            const firstName = document.getElementById('first_name').value.trim();
+            const lastName = document.getElementById('last_name').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm_password').value;
+            const departmentId = parseInt(deptSelect.value, 10);
+
+            if (!username || !firstName || !lastName || !password || !confirm || !departmentId) {
+                return; // browser required attributes already enforce most of this
+            }
+            if (password !== confirm) {
+                errorEl.textContent = 'Passwords do not match.';
+                errorEl.hidden = false;
                 return;
             }
 
-            const errorEl = document.getElementById('register-error');
-            const form = document.getElementById('register-form');
-            const deptSelect = document.getElementById('department_id');
-
-            // 1. Populate department options from the Department table
+            // 2. Check username uniqueness against Users table (GET /api/Users)
             try {
-                const result = await api('/Departments');
-                if (result.ok && Array.isArray(result.body)) {
-                    // Keep the placeholder; append real rows
-                    result.body.forEach(function (dept) {
-                        const opt = document.createElement('option');
-                        // Support either department_id or id field names from the model
-                        opt.value = dept.department_id != null ? dept.department_id : dept.id;
-                        opt.textContent = dept.name;
-                        deptSelect.appendChild(opt);
+                const usersResult = await api('/Users');
+                if (usersResult.ok && Array.isArray(usersResult.body)) {
+                    const taken = usersResult.body.some(function (u) {
+                        return u.username && u.username.toLowerCase() === username.toLowerCase();
                     });
-                }
-            } catch (err) {
-                console.error('Failed to load departments', err);
-            }
-
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                errorEl.hidden = true;
-
-                const username = document.getElementById('username').value.trim();
-                const firstName = document.getElementById('first_name').value.trim();
-                const lastName = document.getElementById('last_name').value.trim();
-                const password = document.getElementById('password').value;
-                const confirm = document.getElementById('confirm_password').value;
-                const departmentId = parseInt(deptSelect.value, 10);
-
-                if (!username || !firstName || !lastName || !password || !confirm || !departmentId) {
-                    return; // browser required attributes already enforce most of this
-                }
-                if (password !== confirm) {
-                    errorEl.textContent = 'Passwords do not match.';
-                    errorEl.hidden = false;
-                    return;
-                }
-
-                // 2. Check username uniqueness against Users table (GET /api/Users)
-                try {
-                    const usersResult = await api('/Users');
-                    if (usersResult.ok && Array.isArray(usersResult.body)) {
-                        const taken = usersResult.body.some(function (u) {
-                            return u.username && u.username.toLowerCase() === username.toLowerCase();
-                        });
-                        if (taken) {
-                            // Exact message required by the HTML comment — do not touch the DB
-                            errorEl.textContent = 'That username is already taken.';
-                            errorEl.hidden = false;
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
-
-                // Create the user (role defaults to false / employee)
-                const payload = {
-                    username: username,
-                    password: password,
-                    role: false,
-                    first_name: firstName,
-                    last_name: lastName,
-                    department_id: departmentId
-                };
-
-                try {
-                    const createResult = await api('/Users', {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (createResult.ok && createResult.body) {
-                        // Log the new user in and go to the main page
-                        setCurrentUser(createResult.body);
-                        window.location.href = 'reimbursements.html';
-                    } else {
-                        // Backend may still reject (e.g. unique constraint race)
+                    if (taken) {
+                        // Exact message required by the HTML comment — do not touch the DB
                         errorEl.textContent = 'That username is already taken.';
                         errorEl.hidden = false;
+                        return;
                     }
-                } catch (err) {
-                    console.error(err);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+
+            // Create the user (role defaults to false / employee)
+            const payload = {
+                username: username,
+                password: password,
+                role: false,
+                first_name: firstName,
+                last_name: lastName,
+                department_id: departmentId
+            };
+
+            try {
+                const createResult = await api('/Users', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (createResult.ok && createResult.body) {
+                    // Log the new user in and go to the main page
+                    setCurrentUser(createResult.body);
+                    window.location.href = 'reimbursements.html';
+                } else {
+                    // Backend may still reject (e.g. unique constraint race)
                     errorEl.textContent = 'That username is already taken.';
                     errorEl.hidden = false;
                 }
-            });
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = 'That username is already taken.';
+                errorEl.hidden = false;
+            }
         });
-    </script>
+    });
+</script>
 </body>
 </html>
 <!-- 1. the options under department should be from the Department table (name)

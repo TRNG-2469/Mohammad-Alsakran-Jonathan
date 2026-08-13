@@ -31,7 +31,7 @@
         </main>
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
-            if (!requireAuth()) return;
+            if (!(await requireAuth())) return;
 
             // Managers only
             if (!isManager()) {

@@ -20,7 +20,7 @@
             </div>
 
             <!-- error message -->
-            <p class="form-status is-error" hidden>That username or password isn't right.</p>
+            <p class="form-status is-error"  id="login-error" hidden>That username or password isn't right.</p>
 
             <!-- Form -->
             <form class="form-card" id="login-form" action="#" method="post" novalidate>
@@ -70,7 +70,9 @@
                         // POST /api/login — backend checks Users table (UsersServiceImpl.logIn)
                         const result = await api('/login', {
                             method: 'POST',
-                            body: JSON.stringify({ username: username, password: password })
+                            headers: {
+                                'Authorization': 'Basic ' + btoa(username + ':' + password) //~~~~~~~~~btoa() is the browsers built in base64 encoder, which is required by Basic Auth (username:password encoded to base64 in the header)
+                            }
                         });
 
                         if (result.ok && result.body) {
