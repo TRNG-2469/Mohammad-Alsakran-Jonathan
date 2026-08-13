@@ -62,8 +62,8 @@
 
             // Newest first — prefer created_at / submitted_at if present, else by id descending
             items = items.slice().sort(function (a, b) {
-                const da = a.created_at || a.submitted_at || a.reimbursement_id || a.id || 0;
-                const db = b.created_at || b.submitted_at || b.reimbursement_id || b.id || 0;
+                const da = a.created_at || a.submitted_at || a.reimbursements_id || a.id || 0;
+                const db = b.created_at || b.submitted_at || b.reimbursements_id || b.id || 0;
                 if (typeof da === 'string' && typeof db === 'string') {
                     return db.localeCompare(da);
                 }
