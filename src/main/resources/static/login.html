@@ -5,9 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sign In</title>
         <link rel="stylesheet" href="styles.css">
+        <script src="app.js" defer></script>
     </head>
     <body>
-        <!-- Nav -->
+        <!-- Nav to register-->
         <nav>
             <p class="auth-switch">Don't have an account? <a href="register.html">Register one</a>.</p>
         </nav>
@@ -21,8 +22,9 @@
             <!-- error message -->
             <p class="form-status is-error" hidden>That username or password isn't right.</p>
 
-            <!-- Username -->
-            <form class="form-card" action="/login" method="post" novalidate>
+            <!-- Form -->
+            <form class="form-card" id="login-form" action="#" method="post" novalidate>
+                <!-- Username -->
                 <div class="field">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" autocomplete="username" required>
@@ -41,6 +43,51 @@
                 </div>
             </form>
         </main>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // If already logged in, go straight to the main app
+                if (getCurrentUser()) {
+                    window.location.href = 'reimbursements.html';
+                    return;
+                }
+
+                const form = document.getElementById('login-form');
+                const errorEl = document.getElementById('login-error');
+
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    errorEl.hidden = true;
+
+                    const username = document.getElementById('username').value.trim();
+                    const password = document.getElementById('password').value;
+
+                    if (!username || !password) {
+                        errorEl.hidden = false;
+                        return;
+                    }
+
+                    try {
+                        // POST /api/login — backend checks Users table (UsersServiceImpl.logIn)
+                        const result = await api('/login', {
+                            method: 'POST',
+                            body: JSON.stringify({ username: username, password: password })
+                        });
+
+                        if (result.ok && result.body) {
+                            // Success: store user (password already stripped by backend) and redirect
+                            setCurrentUser(result.body);
+                            window.location.href = 'reimbursements.html';
+                        } else {
+                            // 401 or other failure — show the exact message required by the comment
+                            errorEl.hidden = false;
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        errorEl.hidden = false;
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
 <!-- Once Submit button is pressed, Username and password should be checked against the Users Table. If the combination

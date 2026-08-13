@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>My Reimbursements</title>
         <link rel="stylesheet" href="styles.css">
+        <script src="app.js" defer></script>
     </head>
     <body>
 
@@ -22,9 +23,56 @@
                     <h1>My requests</h1>
                     <p class="panel-sub">Every reimbursement you've filed, newest first.</p>
                 </div>
+
+                <div class="receipt-list" id="my-requests-list">
+                    <!-- filled by JS -->
+                </div>
             </section>
         </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            if (!requireAuth()) return;
+            updateApprovalsNav();
 
+            const listEl = document.getElementById('my-requests-list');
+            const user = getCurrentUser();
+
+            try {
+                // Backend route: GET /api/Reimbursements/author/{id}
+                const result = await api('/Reimbursements/author/' + user.user_id);
+
+                if (!result.ok || !Array.isArray(result.body)) {
+                    showEmptyState(listEl, 'Could not load your requests.');
+                    return;
+                }
+
+                let items = result.body;
+
+                // Newest first — prefer created_at / submitted_at if present, else by id descending
+                items = items.slice().sort(function (a, b) {
+                    const da = a.created_at || a.submitted_at || a.reimbursement_id || a.id || 0;
+                    const db = b.created_at || b.submitted_at || b.reimbursement_id || b.id || 0;
+                    if (typeof da === 'string' && typeof db === 'string') {
+                        return db.localeCompare(da);
+                    }
+                    return (db > da ? 1 : db < da ? -1 : 0);
+                });
+
+                if (items.length === 0) {
+                    showEmptyState(listEl, 'You have not filed any reimbursements yet.');
+                    return;
+                }
+
+                listEl.innerHTML = '';
+                items.forEach(function (reimb) {
+                    listEl.appendChild(buildReceiptCard(reimb, false));
+                });
+            } catch (err) {
+                console.error(err);
+                showEmptyState(listEl, 'Could not load your requests.');
+            }
+        });
+    </script>
     </body>
 </html>
 <!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)

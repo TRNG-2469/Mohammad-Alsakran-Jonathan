@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Approvals</title>
         <link rel="stylesheet" href="styles.css">
+        <script src="app.js" defer></script>
     </head>
     <body>
 
@@ -22,9 +23,112 @@
                     <h1>Approvals</h1>
                     <p class="panel-sub">Requests waiting on your decision, across your team.</p>
                 </div>
+
+                <div class="receipt-list" id="approvals-list">
+                    <!-- filled by JS -->
+                </div>
             </section>
         </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            if (!requireAuth()) return;
 
+            // Managers only
+            if (!isManager()) {
+                window.location.href = 'reimbursements.html';
+                return;
+            }
+            updateApprovalsNav();
+
+            const listEl = document.getElementById('approvals-list');
+
+            async function loadPending() {
+                listEl.innerHTML = '';
+                try {
+                    // Prefer the dedicated filter endpoint; fall back to all + client filter
+                    let items = [];
+                    let result = await api('/Reimbursements/filter?status=PENDING');
+                    if (result.ok && Array.isArray(result.body)) {
+                        items = result.body;
+                    } else {
+                        result = await api('/Reimbursements');
+                        if (result.ok && Array.isArray(result.body)) {
+                            items = result.body.filter(function (r) {
+                                return (r.status || '').toUpperCase() === 'PENDING';
+                            });
+                        }
+                    }
+
+                    if (items.length === 0) {
+                        showEmptyState(listEl, 'No pending requests right now.');
+                        return;
+                    }
+
+                    // Newest first when possible
+                    items = items.slice().sort(function (a, b) {
+                        const da = a.created_at || a.submitted_at || a.reimbursement_id || a.id || 0;
+                        const db = b.created_at || b.submitted_at || b.reimbursement_id || b.id || 0;
+                        if (typeof da === 'string' && typeof db === 'string') {
+                            return db.localeCompare(da);
+                        }
+                        return (db > da ? 1 : db < da ? -1 : 0);
+                    });
+
+                    items.forEach(function (reimb) {
+                        listEl.appendChild(buildReceiptCard(reimb, true));
+                    });
+                } catch (err) {
+                    console.error(err);
+                    showEmptyState(listEl, 'Could not load pending requests.');
+                }
+            }
+
+            // Delegate Accept / Deny clicks
+            listEl.addEventListener('click', async function (e) {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+
+                const id = btn.dataset.id;
+                const action = btn.dataset.action; // 'accept' | 'deny'
+                const newStatus = action === 'accept' ? 'APPROVED' : 'DENIED';
+                const user = getCurrentUser();
+
+                // Disable buttons while resolving
+                const card = btn.closest('.receipt-card');
+                card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+
+                try {
+                    // Backend route: PUT /api/Reimbursements/{id}/resolve
+                    // Send the new status and the resolving manager as resolver_id
+                    const result = await api('/Reimbursements/' + id + '/resolve', {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            status: newStatus,
+                            resolver_id: user.user_id
+                        })
+                    });
+
+                    if (result.ok) {
+                        // Remove the card from the pending list (or refresh)
+                        card.remove();
+                        if (!listEl.querySelector('.receipt-card')) {
+                            showEmptyState(listEl, 'No pending requests right now.');
+                        }
+                    } else {
+                        // Re-enable on failure
+                        card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                        alert('Could not update request.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                    alert('Could not update request.');
+                }
+            });
+
+            await loadPending();
+        });
+    </script>
     </body>
 </html>
 <!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)
