@@ -17,8 +17,6 @@ public class MainClass {
         Users user = new Users(2, "NewEmployee", "password2", false,"New", "Employee", 1 );
         userDAO.create(user);
 
-
-
         //Update
         UsersDAO userDAO = new UsersDAOImpl();
 
@@ -112,7 +110,27 @@ public class MainClass {
             }
         });
 
+
+
+
+
         app.get("/api/me", userController::getCurrentUser);
+
+
+
+
+
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ promoting employees to managers (only way to create managers)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        app.put("/api/Users/{id}/role", userController::updateUserRole);
+
+        app.before("/api/Users/{id}/role", ctx -> {
+            Boolean role = ctx.sessionAttribute("role");
+            if (role == null || !role) {
+                ctx.status(403);
+                ctx.json(new ErrorResponse("Only managers can change user roles."));
+                ctx.skipRemainingHandlers();
+            }
+        });
 
 
         app.exception(IllegalArgumentException.class,( e, ctx) -> {

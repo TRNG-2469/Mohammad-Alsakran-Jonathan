@@ -14,4 +14,6 @@ public interface UsersService {
 
     //My idea for login (for now)
     Users logIn(String username, String password);
+
+    void updateRole(int id, boolean role);
 }

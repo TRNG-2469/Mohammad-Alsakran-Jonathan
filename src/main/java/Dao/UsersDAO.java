@@ -11,4 +11,5 @@ public interface UsersDAO {
     Users findByUsername(String username);
     Users findById(int id);
     List<Users> findAll();
+    void updateRole(int id, boolean role); //----------promoting employees to managers
 }

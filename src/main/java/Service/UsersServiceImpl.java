@@ -24,7 +24,7 @@ public class UsersServiceImpl implements UsersService{
         if(userDAO.findByUsername(user.getUsername()) != null){
             throw new IllegalArgumentException("Username already taken.");
         }
-
+        user.setRole(false);
         String hashed = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
         user.setPassword(hashed);
 
@@ -80,6 +80,12 @@ public class UsersServiceImpl implements UsersService{
             return user;
         }
         return null;
+    }
+    @Override
+    public void updateRole(int id, boolean role) {
+        Users user = userDAO.findById(id);
+        if (user == null) throw new IllegalArgumentException("User not found.");
+        userDAO.updateRole(id, role);
     }
 
 
