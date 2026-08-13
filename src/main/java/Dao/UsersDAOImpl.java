@@ -138,5 +138,17 @@ public class UsersDAOImpl implements UsersDAO{
             throw new RuntimeException(e);
         }
     }
+    @Override
+    public void updateRole(int id, boolean role) {
+        String sql = "UPDATE Users SET role = ? WHERE user_id = ?";
+        try (Connection conn = ConnectionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, role);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

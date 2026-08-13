@@ -82,6 +82,14 @@ public class UsersController {
     }
 
 
+    public void updateUserRole(Context ctx){
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        Users payload = ctx.bodyAsClass(Users.class);
+        userService.updateRole(id, payload.isRole());
+        ctx.status(200);
+    }
+
+
 
 
 

@@ -1,147 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Approvals</title>
-        <link rel="stylesheet" href="styles.css">
-        <script src="app.js" defer></script>
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approvals</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
 
-    <!--Navigate to tabs -->
-        <nav class="tabs" aria-label="Sections">
-            <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
-            <a class="tab" href="my-requests.html">My requests</a>
-            <a class="tab" href="approvals.html">Approvals</a>
+<!--Navigate to tabs -->
+<nav class="tabs" aria-label="Sections">
+    <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
+    <a class="tab" href="my-requests.html">My requests</a>
+    <a class="tab" href="approvals.html">Approvals</a>
 
-            <div class="whoami">
-                <div class="whoami-text">
-                    <span class="whoami-name" id="whoami-name"></span>
-                    <span class="whoami-dept" id="whoami-dept"></span>
-                </div>
-                <button type="button" class="btn" id="logout-btn">Log out</button>
-            </div>
-        </nav>
+    <div class="whoami">
+        <div class="whoami-text">
+            <span class="whoami-name" id="whoami-name"></span>
+            <span class="whoami-dept" id="whoami-dept"></span>
+        </div>
+        <button type="button" class="btn btn-logout" id="logout-btn">Log out</button>
+    </div>
+</nav>
 
-    <!-- Title -->
-        <main id="main">
-            <section class="panel">
-                <div class="panel-head">
-                    <h1>Approvals</h1>
-                    <p class="panel-sub">Requests waiting on your decision, across your team.</p>
-                </div>
+<!-- Title -->
+<main id="main">
+    <section class="panel">
+        <div class="panel-head">
+            <h1>Approvals</h1>
+            <p class="panel-sub">Requests waiting on your decision, across your team.</p>
+        </div>
 
-                <div class="receipt-list" id="approvals-list">
-                    <!-- filled by JS -->
-                </div>
-            </section>
-        </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', async function () {
-            if (!(await requireAuth())) return;
+        <div class="view-toggle">
+            <button type="button" class="btn tab-toggle active" data-view="pending">Pending</button>
+            <button type="button" class="btn tab-toggle" data-view="history">History</button>
+        </div>
 
-            // Managers only
-            if (!isManager()) {
-                window.location.href = 'reimbursements.html';
-                return;
-            }
-            updateApprovalsNav();
-            renderWhoAmI();
-            document.getElementById('logout-btn').addEventListener('click', logOut);
+        <div class="receipt-list" id="approvals-list">
+            <!-- filled by JS -->
+        </div>
+    </section>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        if (!(await requireAuth())) return;
 
-            const listEl = document.getElementById('approvals-list');
+        // Managers only
+        if (!isManager()) {
+            window.location.href = 'reimbursements.html';
+            return;
+        }
+        updateApprovalsNav();
+        renderWhoAmI();
+        document.getElementById('logout-btn').addEventListener('click', logOut);
 
-            async function loadPending() {
-                listEl.innerHTML = '';
-                try {
-                    // Prefer the dedicated filter endpoint; fall back to all + client filter
-                    let items = [];
-                    let result = await api('/Reimbursements/filter?status=PENDING');
-                    if (result.ok && Array.isArray(result.body)) {
-                        items = result.body;
-                    } else {
-                        result = await api('/Reimbursements');
-                        if (result.ok && Array.isArray(result.body)) {
-                            items = result.body.filter(function (r) {
-                                return (r.status || '').toUpperCase() === 'PENDING';
-                            });
-                        }
-                    }
+        const listEl = document.getElementById('approvals-list');
+        const toggleBtns = document.querySelectorAll('.tab-toggle');
 
-                    if (items.length === 0) {
-                        showEmptyState(listEl, 'No pending requests right now.');
-                        return;
-                    }
-
-                    // Newest first when possible
-                    items = items.slice().sort(function (a, b) {
-                        const da = a.created_at || a.submitted_at || a.reimbursement_id || a.id || 0;
-                        const db = b.created_at || b.submitted_at || b.reimbursement_id || b.id || 0;
-                        if (typeof da === 'string' && typeof db === 'string') {
-                            return db.localeCompare(da);
-                        }
-                        return (db > da ? 1 : db < da ? -1 : 0);
+        async function loadByStatuses(statuses) {
+            listEl.innerHTML = '';
+            try {
+                // Fetching all and filtering client-side rather than using
+                // /Reimbursements/filter, since that endpoint requires a specific
+                // department_id and this view needs to show requests across all
+                // departments, filtered only by status.
+                let items = [];
+                const result = await api('/Reimbursements');
+                if (result.ok && Array.isArray(result.body)) {
+                    items = result.body.filter(function (r) {
+                        return statuses.indexOf((r.status || '').toUpperCase()) !== -1;
                     });
-
-                    items.forEach(function (reimb) {
-                        listEl.appendChild(buildReceiptCard(reimb, true));
-                    });
-                } catch (err) {
-                    console.error(err);
-                    showEmptyState(listEl, 'Could not load pending requests.');
                 }
+
+                if (items.length === 0) {
+                    showEmptyState(listEl, statuses.indexOf('PENDING') !== -1
+                        ? 'No pending requests right now.'
+                        : 'No resolved requests yet.');
+                    return;
+                }
+
+                // Newest first, by id descending
+                items = items.slice().sort(function (a, b) {
+                    return (b.reimbursements_id || 0) - (a.reimbursements_id || 0);
+                });
+
+                items.forEach(function (reimb) {
+                    const isPending = (reimb.status || '').toUpperCase() === 'PENDING';
+                    listEl.appendChild(buildReceiptCard(reimb, isPending, false));
+                });
+            } catch (err) {
+                console.error(err);
+                showEmptyState(listEl, 'Could not load requests.');
             }
+        }
 
-            // Delegate Accept / Deny clicks
-            listEl.addEventListener('click', async function (e) {
-                const btn = e.target.closest('button[data-action]');
-                if (!btn) return;
+        toggleBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                toggleBtns.forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                if (btn.dataset.view === 'pending') {
+                    loadByStatuses(['PENDING']);
+                } else {
+                    loadByStatuses(['APPROVED', 'DENIED']);
+                }
+            });
+        });
 
-                const id = btn.dataset.id;
-                const action = btn.dataset.action; // 'accept' | 'deny'
-                const newStatus = action === 'accept' ? 'APPROVED' : 'DENIED';
-                const user = getCurrentUser();
+        // Delegate Accept / Deny clicks (only present on pending cards)
+        listEl.addEventListener('click', async function (e) {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
 
-                // Disable buttons while resolving
-                const card = btn.closest('.receipt-card');
-                card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+            const id = btn.dataset.id;
+            const action = btn.dataset.action; // 'accept' | 'deny'
+            const newStatus = action === 'accept' ? 'APPROVED' : 'DENIED';
+            const user = getCurrentUser();
 
-                try {
-                    // Backend route: PUT /api/Reimbursements/{id}/resolve
-                    // Send the new status and the resolving manager as resolver_id
-                    const result = await api('/Reimbursements/' + id + '/resolve', {
-                        method: 'PUT',
-                        body: JSON.stringify({
-                            status: newStatus,
-                            resolver_id: user.user_id
-                        })
-                    });
+            // Disable buttons while resolving
+            const card = btn.closest('.receipt-card');
+            card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
 
-                    if (result.ok) {
-                        // Remove the card from the pending list (or refresh)
-                        card.remove();
-                        if (!listEl.querySelector('.receipt-card')) {
-                            showEmptyState(listEl, 'No pending requests right now.');
-                        }
-                    } else {
-                        // Re-enable on failure
-                        card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-                        alert('Could not update request.');
+            try {
+                // Backend route: PUT /api/Reimbursements/{id}/resolve
+                // resolver_id is derived server-side from the session, sending it
+                // here is harmless but ignored by the backend
+                const result = await api('/Reimbursements/' + id + '/resolve', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        status: newStatus,
+                        resolver_id: user.user_id
+                    })
+                });
+
+                if (result.ok) {
+                    // Remove the card from the pending list
+                    card.remove();
+                    if (!listEl.querySelector('.receipt-card')) {
+                        showEmptyState(listEl, 'No pending requests right now.');
                     }
-                } catch (err) {
-                    console.error(err);
+                } else {
+                    // Re-enable on failure
                     card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
                     alert('Could not update request.');
                 }
-            });
-
-            await loadPending();
+            } catch (err) {
+                console.error(err);
+                card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                alert('Could not update request.');
+            }
         });
-    </script>
-    </body>
+
+        await loadByStatuses(['PENDING']);
+    });
+</script>
+</body>
 </html>
 <!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)
 2. Finish the implementation. Display every record in Reimbursements where status is 'PENDING'. below each record
 have 2 buttons, 'deny' and 'accept'. after either button is pushed change the status to either 'APPROVED' or 'DENIED' based on which button was
 pressed
+3. Added a Pending/History toggle so managers can view resolved (APPROVED/DENIED) requests too. -->

@@ -160,6 +160,24 @@ main {
 
 .panel-sub { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
 
+.view-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tab-toggle {
+    background: transparent;
+    color: var(--ink-soft);
+    border-color: var(--line-strong);
+}
+
+.tab-toggle.active {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+}
+
 /* ---------------------------------- form ------------------------------------ */
 
 .request-form {

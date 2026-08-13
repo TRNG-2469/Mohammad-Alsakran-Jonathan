@@ -161,17 +161,18 @@
                 });
 
                 if (createResult.ok && createResult.body) {
-                    // Log the new user in and go to the main page
                     setCurrentUser(createResult.body);
                     window.location.href = 'reimbursements.html';
                 } else {
-                    // Backend may still reject (e.g. unique constraint race)
-                    errorEl.textContent = 'That username is already taken.';
+                    const message = (createResult.body && createResult.body.error)
+                        ? createResult.body.error
+                        : 'Could not create account.';
+                    errorEl.textContent = message;
                     errorEl.hidden = false;
                 }
             } catch (err) {
                 console.error(err);
-                errorEl.textContent = 'That username is already taken.';
+                errorEl.textContent = 'Could not create account.';
                 errorEl.hidden = false;
             }
         });
