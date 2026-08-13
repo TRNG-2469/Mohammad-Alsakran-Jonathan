@@ -30,6 +30,24 @@
                 <div class="panel-head">
                     <h1>Approvals</h1>
                     <p class="panel-sub">Requests waiting on your decision, across your team.</p>
+                    <div class="filter-bar">
+                        <div class="field">
+                            <label for="status-filter">Status</label>
+                            <select id="status-filter">
+                                <option value="PENDING" selected>Pending</option>
+                                <option value="APPROVED">Approved</option>
+                                <option value="DENIED">Denied</option>
+                                <option value="ALL">All statuses</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="department-filter">Department</label>
+                            <select id="department-filter">
+                                <option value="ALL" selected>All departments</option>
+                                <!-- populated by JS -->
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="receipt-list" id="approvals-list">
@@ -51,45 +69,94 @@
             document.getElementById('logout-btn').addEventListener('click', logOut);
 
             const listEl = document.getElementById('approvals-list');
+            const statusFilter = document.getElementById('status-filter');
+            const departmentFilter = document.getElementById('department-filter');
 
-            async function loadPending() {
-                listEl.innerHTML = '';
+            // author_id -> department_id, used when a filter can't be pushed down
+            // to the backend (Reimbursement records don't carry department_id).
+            let authorDeptMap = {};
+
+            async function loadDepartmentOptions() {
                 try {
-                    // Prefer the dedicated filter endpoint; fall back to all + client filter
-                    let items = [];
-                    let result = await api('/Reimbursements/filter?status=PENDING');
+                    const result = await api('/Departments');
                     if (result.ok && Array.isArray(result.body)) {
-                        items = result.body;
+                        result.body.forEach(function (dept) {
+                            const opt = document.createElement('option');
+                            opt.value = dept.department_id != null ? dept.department_id : dept.id;
+                            opt.textContent = dept.name;
+                            departmentFilter.appendChild(opt);
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to load departments', err);
+                }
+            }
+
+            async function loadAuthorDeptMap() {
+                try {
+                    const result = await api('/Users');
+                    if (result.ok && Array.isArray(result.body)) {
+                        authorDeptMap = {};
+                        result.body.forEach(function (u) {
+                            authorDeptMap[u.user_id] = u.department_id;
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to load users for department filtering', err);
+                }
+            }
+
+            function renderItems(items) {
+                listEl.innerHTML = '';
+
+                if (items.length === 0) {
+                    showEmptyState(listEl, 'No requests match that filter.');
+                    return;
+                }
+
+                items = items.slice().sort(function (a, b) {
+                    return b.reimbursements_id - a.reimbursements_id;
+                });
+
+                items.forEach(function (reimb) {
+                    const status = (reimb.status || '').toUpperCase();
+                    // Accept/Deny only make sense on PENDING requests.
+                    listEl.appendChild(buildReceiptCard(reimb, status === 'PENDING'));
+                });
+            }
+
+            async function loadItems() {
+                listEl.innerHTML = '';
+                const status = statusFilter.value;
+                const departmentId = departmentFilter.value;
+
+                try {
+                    let items = [];
+
+                    if (status !== 'ALL' && departmentId !== 'ALL') {
+                        // Both filters map directly onto the backend endpoint.
+                        const result = await api('/Reimbursements/filter?status=' + status + '&department_id=' + departmentId);
+                        if (result.ok && Array.isArray(result.body)) {
+                            items = result.body;
+                        }
                     } else {
-                        result = await api('/Reimbursements');
+                        // "All statuses" and/or "All departments" — the backend
+                        // filter endpoint can't express that, so pull everything
+                        // and filter client-side.
+                        const result = await api('/Reimbursements');
                         if (result.ok && Array.isArray(result.body)) {
                             items = result.body.filter(function (r) {
-                                return (r.status || '').toUpperCase() === 'PENDING';
+                                const statusMatches = status === 'ALL' || (r.status || '').toUpperCase() === status;
+                                const deptMatches = departmentId === 'ALL' || String(authorDeptMap[r.author_id]) === departmentId;
+                                return statusMatches && deptMatches;
                             });
                         }
                     }
 
-                    if (items.length === 0) {
-                        showEmptyState(listEl, 'No pending requests right now.');
-                        return;
-                    }
-
-                    // Newest first when possible
-                    items = items.slice().sort(function (a, b) {
-                        const da = a.created_at || a.submitted_at || a.reimbursements_id || a.id || 0;
-                        const db = b.created_at || b.submitted_at || b.reimbursements_id || b.id || 0;
-                        if (typeof da === 'string' && typeof db === 'string') {
-                            return db.localeCompare(da);
-                        }
-                        return (db > da ? 1 : db < da ? -1 : 0);
-                    });
-
-                    items.forEach(function (reimb) {
-                        listEl.appendChild(buildReceiptCard(reimb, true));
-                    });
+                    renderItems(items);
                 } catch (err) {
                     console.error(err);
-                    showEmptyState(listEl, 'Could not load pending requests.');
+                    showEmptyState(listEl, 'Could not load requests.');
                 }
             }
 
@@ -103,13 +170,10 @@
                 const newStatus = action === 'accept' ? 'APPROVED' : 'DENIED';
                 const user = getCurrentUser();
 
-                // Disable buttons while resolving
                 const card = btn.closest('.receipt-card');
                 card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
 
                 try {
-                    // Backend route: PUT /api/Reimbursements/{id}/resolve
-                    // Send the new status and the resolving manager as resolver_id
                     const result = await api('/Reimbursements/' + id + '/resolve', {
                         method: 'PUT',
                         body: JSON.stringify({
@@ -119,13 +183,10 @@
                     });
 
                     if (result.ok) {
-                        // Remove the card from the pending list (or refresh)
-                        card.remove();
-                        if (!listEl.querySelector('.receipt-card')) {
-                            showEmptyState(listEl, 'No pending requests right now.');
-                        }
+                        // Reload the current filtered view — a resolved item may
+                        // no longer belong in it.
+                        await loadItems();
                     } else {
-                        // Re-enable on failure
                         card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
                         alert('Could not update request.');
                     }
@@ -136,7 +197,12 @@
                 }
             });
 
-            await loadPending();
+            statusFilter.addEventListener('change', loadItems);
+            departmentFilter.addEventListener('change', loadItems);
+
+            await loadDepartmentOptions();
+            await loadAuthorDeptMap();
+            await loadItems();
         });
     </script>
     </body>

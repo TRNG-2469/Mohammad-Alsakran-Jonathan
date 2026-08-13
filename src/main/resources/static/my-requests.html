@@ -30,6 +30,17 @@
         <div class="panel-head">
             <h1>My requests</h1>
             <p class="panel-sub">Every reimbursement you've filed, newest first.</p>
+            <div class="filter-bar">
+                <div class="field">
+                    <label for="status-filter">Status</label>
+                    <select id="status-filter">
+                        <option value="ALL" selected>All statuses</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="DENIED">Denied</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="receipt-list" id="my-requests-list">
@@ -45,9 +56,34 @@
         document.getElementById('logout-btn').addEventListener('click', logOut);
 
         const listEl = document.getElementById('my-requests-list');
+        const statusFilter = document.getElementById('status-filter');
         const user = getCurrentUser();
 
         wireEditHandlers(listEl, user);
+
+        let allItems = [];
+
+        function render() {
+            const selected = statusFilter.value;
+            const items = selected === 'ALL'
+                ? allItems
+                : allItems.filter(function (r) {
+                    return (r.status || '').toUpperCase() === selected;
+                });
+
+            listEl.innerHTML = '';
+
+            if (items.length === 0) {
+                showEmptyState(listEl, selected === 'ALL'
+                    ? 'You have not filed any reimbursements yet.'
+                    : 'No requests with that status.');
+                return;
+            }
+
+            items.forEach(function (reimb) {
+                listEl.appendChild(buildReceiptCard(reimb, false, true));
+            });
+        }
 
         try {
             // Backend route: GET /api/Reimbursements/author/{id}
@@ -58,31 +94,18 @@
                 return;
             }
 
-            let items = result.body;
-
-            // Newest first — prefer created_at / submitted_at if present, else by id descending
-            items = items.slice().sort(function (a, b) {
-                const da = a.created_at || a.submitted_at || a.reimbursements_id || a.id || 0;
-                const db = b.created_at || b.submitted_at || b.reimbursements_id || b.id || 0;
-                if (typeof da === 'string' && typeof db === 'string') {
-                    return db.localeCompare(da);
-                }
-                return (db > da ? 1 : db < da ? -1 : 0);
+            // Newest first, by reimbursements_id descending
+            allItems = result.body.slice().sort(function (a, b) {
+                return b.reimbursements_id - a.reimbursements_id;
             });
 
-            if (items.length === 0) {
-                showEmptyState(listEl, 'You have not filed any reimbursements yet.');
-                return;
-            }
-
-            listEl.innerHTML = '';
-            items.forEach(function (reimb) {
-                listEl.appendChild(buildReceiptCard(reimb, false, true));
-            });
+            render();
         } catch (err) {
             console.error(err);
             showEmptyState(listEl, 'Could not load your requests.');
         }
+
+        statusFilter.addEventListener('change', render);
     });
 </script>
 </body>

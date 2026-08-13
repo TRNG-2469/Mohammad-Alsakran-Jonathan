@@ -1,9 +1,6 @@
 import Controller.DepartmentController;
 import Controller.ReimbursementController;
 import Controller.UsersController;
-import Dao.UsersDAO;
-import Dao.UsersDAOImpl;
-import Model.Users;
 import exceptions.ErrorResponse;
 import io.javalin.Javalin;
 import org.slf4j.Logger;
