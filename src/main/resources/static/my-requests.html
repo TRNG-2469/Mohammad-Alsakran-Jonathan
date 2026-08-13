@@ -1,79 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>My Reimbursements</title>
-        <link rel="stylesheet" href="styles.css">
-        <script src="app.js" defer></script>
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reimbursements</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
 
-    <!--Navigate to tabs -->
-        <nav class="tabs" aria-label="Sections">
-            <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
-            <a class="tab" href="my-requests.html">My requests</a>
-            <a class="tab" href="approvals.html">Approvals</a>
-        </nav>
+<!--Navigate to tabs -->
+<nav class="tabs" aria-label="Sections">
+    <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
+    <a class="tab" href="my-requests.html">My requests</a>
+    <a class="tab" href="approvals.html">Approvals</a>
 
-    <!-- Title -->
-        <main id="main">
-            <section class="panel">
-                <div class="panel-head">
-                    <h1>My requests</h1>
-                    <p class="panel-sub">Every reimbursement you've filed, newest first.</p>
-                </div>
+    <div class="whoami">
+        <div class="whoami-text">
+            <span class="whoami-name" id="whoami-name"></span>
+            <span class="whoami-dept" id="whoami-dept"></span>
+        </div>
+        <button type="button" class="btn btn-logout" id="logout-btn">Log out</button>
+    </div>
+</nav>
 
-                <div class="receipt-list" id="my-requests-list">
-                    <!-- filled by JS -->
-                </div>
-            </section>
-        </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', async function () {
-            if (!(await requireAuth())) return;
-            updateApprovalsNav();
+<!-- Title -->
+<main id="main">
+    <section class="panel">
+        <div class="panel-head">
+            <h1>My requests</h1>
+            <p class="panel-sub">Every reimbursement you've filed, newest first.</p>
+        </div>
 
-            const listEl = document.getElementById('my-requests-list');
-            const user = getCurrentUser();
+        <div class="receipt-list" id="my-requests-list">
+            <!-- filled by JS -->
+        </div>
+    </section>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        if (!(await requireAuth())) return;
+        updateApprovalsNav();
+        renderWhoAmI();
+        document.getElementById('logout-btn').addEventListener('click', logOut);
 
-            try {
-                // Backend route: GET /api/Reimbursements/author/{id}
-                const result = await api('/Reimbursements/author/' + user.user_id);
+        const listEl = document.getElementById('my-requests-list');
+        const user = getCurrentUser();
 
-                if (!result.ok || !Array.isArray(result.body)) {
-                    showEmptyState(listEl, 'Could not load your requests.');
-                    return;
-                }
+        wireEditHandlers(listEl, user);
 
-                let items = result.body;
+        try {
+            // Backend route: GET /api/Reimbursements/author/{id}
+            const result = await api('/Reimbursements/author/' + user.user_id);
 
-                // Newest first — prefer created_at / submitted_at if present, else by id descending
-                items = items.slice().sort(function (a, b) {
-                    const da = a.created_at || a.submitted_at || a.reimbursement_id || a.id || 0;
-                    const db = b.created_at || b.submitted_at || b.reimbursement_id || b.id || 0;
-                    if (typeof da === 'string' && typeof db === 'string') {
-                        return db.localeCompare(da);
-                    }
-                    return (db > da ? 1 : db < da ? -1 : 0);
-                });
-
-                if (items.length === 0) {
-                    showEmptyState(listEl, 'You have not filed any reimbursements yet.');
-                    return;
-                }
-
-                listEl.innerHTML = '';
-                items.forEach(function (reimb) {
-                    listEl.appendChild(buildReceiptCard(reimb, false));
-                });
-            } catch (err) {
-                console.error(err);
+            if (!result.ok || !Array.isArray(result.body)) {
                 showEmptyState(listEl, 'Could not load your requests.');
+                return;
             }
-        });
-    </script>
-    </body>
+
+            let items = result.body;
+
+            // Newest first — prefer created_at / submitted_at if present, else by id descending
+            items = items.slice().sort(function (a, b) {
+                const da = a.created_at || a.submitted_at || a.reimbursement_id || a.id || 0;
+                const db = b.created_at || b.submitted_at || b.reimbursement_id || b.id || 0;
+                if (typeof da === 'string' && typeof db === 'string') {
+                    return db.localeCompare(da);
+                }
+                return (db > da ? 1 : db < da ? -1 : 0);
+            });
+
+            if (items.length === 0) {
+                showEmptyState(listEl, 'You have not filed any reimbursements yet.');
+                return;
+            }
+
+            listEl.innerHTML = '';
+            items.forEach(function (reimb) {
+                listEl.appendChild(buildReceiptCard(reimb, false, true));
+            });
+        } catch (err) {
+            console.error(err);
+            showEmptyState(listEl, 'Could not load your requests.');
+        }
+    });
+</script>
+</body>
 </html>
 <!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)
-2. Finish the implementation. display every reimbursement where the current user_id = the record's user_id
+2. Finish the implementation. display every reimbursement where the current user_id = the record's user_id -->

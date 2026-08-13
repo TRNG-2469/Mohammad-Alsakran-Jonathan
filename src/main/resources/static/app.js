@@ -1,8 +1,9 @@
 /**
  * Shared frontend logic for the reimbursement app.
- * Talks to the Javalin backend at 'hardcoded'.
- * Stores the logged-in user in localStorage so pages can enforce
- * auth and the manager-only Approvals tab without server-side rendering.
+ * Talks to the Javalin backend at API_BASE.
+ * Stores the logged-in user in localStorage as a fast local cache, but
+ * requireAuth() always re-verifies against the real server session via
+ * GET /api/me before trusting it.
  */
 
 const API_BASE = 'http://localhost:7700/api';
@@ -31,7 +32,7 @@ function isManager() {
     return !!(user && user.role === true);
 }
 
-/** Redirect to login if there is no session. Call at top of protected pages. */
+/** Redirect to login if there is no real server session. Call at top of protected pages. */
 async function requireAuth() {
     const result = await api('/me');
     if (!result.ok) {
@@ -41,6 +42,24 @@ async function requireAuth() {
     }
     setCurrentUser(result.body);
     return true;
+}
+
+async function logOut() {
+    await api('/logout', { method: 'POST' });
+    clearCurrentUser();
+    window.location.href = 'login.html';
+}
+
+function renderWhoAmI() {
+    const user = getCurrentUser();
+    const nameEl = document.getElementById('whoami-name');
+    const deptEl = document.getElementById('whoami-dept');
+    if (user && nameEl) {
+        nameEl.textContent = user.first_name + ' ' + user.last_name;
+    }
+    if (user && deptEl) {
+        deptEl.textContent = user.role ? 'Manager' : 'Employee';
+    }
 }
 
 /**
@@ -90,13 +109,18 @@ function formatAmount(n) {
  * Build a single receipt-card element from a reimbursement record.
  * Expects fields: reimbursement_id (or id), amount, description, type, status,
  * author_id, resolver_id (optional).
- * When showActions is true, Accept / Deny buttons are added (approvals page).
+ *
+ * showActions  - true on approvals.html, adds Accept / Deny buttons.
+ * showEdit     - true on my-requests.html, adds an Edit button (only when
+ *                status is PENDING) that reveals an inline edit form for
+ *                amount / type / description.
  */
-function buildReceiptCard(reimb, showActions) {
-    const id = reimb.reimbursement_id != null ? reimb.reimbursement_id : reimb.id;
+function buildReceiptCard(reimb, showActions, showEdit) {
+    const id = reimb.reimbursements_id;
     const status = (reimb.status || 'PENDING').toUpperCase();
     const type = (reimb.type || '').toUpperCase();
     const desc = reimb.description || '';
+    const canEdit = !!showEdit && status === 'PENDING';
 
     const card = document.createElement('article');
     card.className = 'receipt-card';
@@ -120,10 +144,104 @@ function buildReceiptCard(reimb, showActions) {
             '  <button type="button" class="btn btn-deny" data-action="deny" data-id="' + id + '">Deny</button>' +
             '</div>'
             : '') +
+        (canEdit
+            ? '<div class="receipt-actions">' +
+            '  <button type="button" class="btn btn-edit" data-action="edit" data-id="' + id + '">Edit</button>' +
+            '</div>' +
+            '<div class="edit-form" data-id="' + id + '" hidden>' +
+            '  <div class="field"><label>Amount</label><input type="number" step="0.01" min="0.01" class="edit-amount" value="' + reimb.amount + '"></div>' +
+            '  <div class="field"><label>Type</label>' +
+            '    <select class="edit-type">' +
+            '      <option value="TRAVEL"' + (type === 'TRAVEL' ? ' selected' : '') + '>Travel</option>' +
+            '      <option value="FOOD"' + (type === 'FOOD' ? ' selected' : '') + '>Food</option>' +
+            '      <option value="LODGING"' + (type === 'LODGING' ? ' selected' : '') + '>Lodging</option>' +
+            '      <option value="OTHER"' + (type === 'OTHER' ? ' selected' : '') + '>Other</option>' +
+            '    </select>' +
+            '  </div>' +
+            '  <div class="field"><label>Description</label><textarea class="edit-description" rows="3">' + escapeHtml(desc) + '</textarea></div>' +
+            '  <p class="edit-error" hidden></p>' +
+            '  <div class="edit-actions">' +
+            '    <button type="button" class="btn btn-primary edit-save" data-id="' + id + '">Save</button>' +
+            '    <button type="button" class="btn edit-cancel" data-id="' + id + '">Cancel</button>' +
+            '  </div>' +
+            '</div>'
+            : '') +
         '</div>' +
         '<span class="stamp" data-status="' + status + '">' + status + '</span>';
 
     return card;
+}
+
+/**
+ * Wire up Edit / Save / Cancel clicks for a list of cards built with
+ * showEdit = true. Call once on the container after rendering.
+ * Delegated, so it works even as cards get added/removed.
+ */
+function wireEditHandlers(listEl, user) {
+    listEl.addEventListener('click', async function (e) {
+        const editBtn = e.target.closest('button[data-action="edit"]');
+        const cancelBtn = e.target.closest('.edit-cancel');
+        const saveBtn = e.target.closest('.edit-save');
+
+        if (editBtn) {
+            const card = editBtn.closest('.receipt-card');
+            card.querySelector('.edit-form').hidden = false;
+            card.querySelector('.receipt-actions').hidden = true;
+            return;
+        }
+
+        if (cancelBtn) {
+            const card = cancelBtn.closest('.receipt-card');
+            card.querySelector('.edit-form').hidden = true;
+            card.querySelector('.receipt-actions').hidden = false;
+            return;
+        }
+
+        if (saveBtn) {
+            const id = saveBtn.dataset.id;
+            const card = saveBtn.closest('.receipt-card');
+            const form = card.querySelector('.edit-form');
+            const errorEl = form.querySelector('.edit-error');
+            errorEl.hidden = true;
+
+            const amount = parseFloat(form.querySelector('.edit-amount').value);
+            const type = form.querySelector('.edit-type').value;
+            const description = form.querySelector('.edit-description').value.trim();
+
+            if (!amount || amount < 0.01 || !type) {
+                errorEl.textContent = 'Amount and type are required.';
+                errorEl.hidden = false;
+                return;
+            }
+
+            saveBtn.disabled = true;
+
+            try {
+                const result = await api('/Reimbursements/' + id, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        amount: amount,
+                        type: type,
+                        description: description,
+                        author_id: user.user_id
+                    })
+                });
+
+                if (result.ok) {
+                    window.location.reload();
+                } else {
+                    errorEl.textContent = 'Could not save changes.';
+                    errorEl.hidden = false;
+                    saveBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = 'Could not save changes.';
+                errorEl.hidden = false;
+                saveBtn.disabled = false;
+            }
+        }
+    });
 }
 
 function escapeHtml(str) {
