@@ -5,7 +5,7 @@
  * auth and the manager-only Approvals tab without server-side rendering.
  */
 
-  //const API_BASE = 'removed hardcoded value';
+  const API_BASE = 'http://localhost:7700/api';
 
 // ---------- Auth helpers ----------
 
