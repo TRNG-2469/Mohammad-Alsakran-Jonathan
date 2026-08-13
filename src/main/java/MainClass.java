@@ -41,7 +41,9 @@ public class MainClass {
         UsersController userController = new UsersController();
         DepartmentController departmentController = new DepartmentController();
         ReimbursementController reimbursementController = new ReimbursementController();
-        Javalin app = Javalin.create().start(7700);
+        Javalin app = Javalin.create(config -> {
+            config.staticFiles.add("/static");
+        }).start(7700);
 
 
         //1. Retrieve all Users
@@ -112,6 +114,8 @@ public class MainClass {
                 ctx.skipRemainingHandlers();
             }
         });
+
+        app.get("/api/me", userController::getCurrentUser);
 
 
         app.exception(IllegalArgumentException.class,( e, ctx) -> {

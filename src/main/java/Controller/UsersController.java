@@ -22,6 +22,8 @@ public class UsersController {
         ctx.json(user);
     }
 
+
+
     public void createUser(Context ctx){
         Users payload = ctx.bodyAsClass(Users.class);
         Users newUser = userService.create(payload);
@@ -64,6 +66,19 @@ public class UsersController {
     public void logOut(Context ctx){
         ctx.sessionAttribute("user_id", null);
         ctx.sessionAttribute("role", null);
+    }
+
+
+
+    public void getCurrentUser(Context ctx){ //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Checks real session and returns the current user (moving away from LocalStorage as teh source of truth)
+        Integer userId = ctx.sessionAttribute("user_id");
+        if (userId == null) {
+            ctx.status(401);
+            ctx.json(new ErrorResponse("Not logged in."));
+            return;
+        }
+        Users user = userService.findById(userId);
+        ctx.json(user);
     }
 
 

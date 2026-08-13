@@ -5,7 +5,7 @@
  * auth and the manager-only Approvals tab without server-side rendering.
  */
 
-  const API_BASE = 'http://localhost:7700/api';
+const API_BASE = 'http://localhost:7700/api';
 
 // ---------- Auth helpers ----------
 
@@ -32,11 +32,14 @@ function isManager() {
 }
 
 /** Redirect to login if there is no session. Call at top of protected pages. */
-function requireAuth() {
-    if (!getCurrentUser()) {
+async function requireAuth() {
+    const result = await api('/me');
+    if (!result.ok) {
+        clearCurrentUser();
         window.location.href = 'login.html';
         return false;
     }
+    setCurrentUser(result.body);
     return true;
 }
 

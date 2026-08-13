@@ -1,126 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Expense Reimbursements</title>
-        <link rel="stylesheet" href="styles.css">
-        <script src="app.js" defer></script>
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Reimbursements</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
 
-        <!--Navigate to tabs -->
-        <nav class="tabs" aria-label="Sections">
-            <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
-            <a class="tab" href="my-requests.html">My requests</a>
-            <a class="tab" href="approvals.html">Approvals</a>
-        </nav>
+<!--Navigate to tabs -->
+<nav class="tabs" aria-label="Sections">
+    <a class="tab" href="reimbursements.html" aria-current="page">New request</a>
+    <a class="tab" href="my-requests.html">My requests</a>
+    <a class="tab" href="approvals.html">Approvals</a>
+</nav>
 
-        <!-- Title -->
-        <main id="main">
-        <section class="panel">
-            <div class="panel-head">
-                <h1>File a reimbursement</h1>
-                <p class="panel-sub">Fill this out like a receipt. Your manager sees it the moment you submit.</p>
+<!-- Title -->
+<main id="main">
+    <section class="panel">
+        <div class="panel-head">
+            <h1>File a reimbursement</h1>
+            <p class="panel-sub">Fill this out like a receipt. Your manager sees it the moment you submit.</p>
+        </div>
+
+
+        <form class="request-form" id="reimb-form" action="#" method="post" novalidate>
+            <div class="field-row">
+                <!-- Amount of reimbursement -->
+                <div class="field">
+                    <label for="amount">Amount:</label>
+                    <div class="amount-input">
+                        <span aria-hidden="true">$</span>
+                        <input type="number" id="amount" name="amount" inputmode="decimal" step="0.01" min="0.01" placeholder="0.00" required>
+                    </div>
+                </div>
+
+                <!-- Reason for Reimbursement -->
+                <div class="field">
+                    <label for="type">Reason for Reimbursement:</label>
+                    <select id="type" name="type" required>
+                        <option value="" disabled selected>Choose one</option>
+                        <option value="TRAVEL">Travel</option>
+                        <option value="FOOD">Food</option>
+                        <option value="LODGING">Lodging</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
             </div>
 
+            <!-- Description of reimbursement -->
+            <div class="field">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4" placeholder="What was this for? Add any detail your manager will need to approve it." required></textarea>
+            </div>
 
-            <form class="request-form" id="reimb-form" action="#" method="post" novalidate>
-                <div class="field-row">
-                    <!-- Amount of reimbursement -->
-                    <div class="field">
-                        <label for="amount">Amount:</label>
-                        <div class="amount-input">
-                            <span aria-hidden="true">$</span>
-                            <input type="number" id="amount" name="amount" inputmode="decimal" step="0.01" min="0.01" placeholder="0.00" required>
-                        </div>
-                    </div>
+            <!--Submit-->
+            <div class="form-footer">
+                <p class="form-status" id="reimb-status"></p>
+                <button type="submit" class="btn btn-primary">Submit request</button>
+            </div>
+        </form>
+    </section>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        if (!(await requireAuth())) return;
+        updateApprovalsNav();
 
-                    <!-- Reason for Reimbursement -->
-                    <div class="field">
-                        <label for="type">Reason for Reimbursement:</label>
-                        <select id="type" name="type" required>
-                            <option value="" disabled selected>Choose one</option>
-                            <option value="TRAVEL">Travel</option>
-                            <option value="MEALS">Meals</option>
-                            <option value="OTHER">Other</option>
-                        </select>
-                    </div>
-                </div>
+        const form = document.getElementById('reimb-form');
+        const statusEl = document.getElementById('reimb-status');
 
-                <!-- Description of reimbursement -->
-                <div class="field">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="4" placeholder="What was this for? Add any detail your manager will need to approve it." required></textarea>
-                </div>
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            statusEl.textContent = '';
+            statusEl.classList.remove('is-error');
 
-                <!--Submit-->
-                <div class="form-footer">
-                    <p class="form-status"></p>
-                    <button type="submit" class="btn btn-primary">Submit request</button>
-                </div>
-            </form>
-        </section>
-        </main>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                if (!requireAuth()) return;
-                updateApprovalsNav();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const type = document.getElementById('type').value;
+            const description = document.getElementById('description').value.trim() || null;
+            const user = getCurrentUser();
 
-                const form = document.getElementById('reimb-form');
-                const statusEl = document.getElementById('reimb-status');
+            if (!amount || amount < 0.01 || !type) {
+                statusEl.textContent = 'Please fill in amount and reason.';
+                statusEl.classList.add('is-error');
+                return;
+            }
 
-                form.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-                    statusEl.textContent = '';
-                    statusEl.classList.remove('is-error');
+            // Payload matches the HTML comment:
+            // default status (backend), amount given, description given or null,
+            // type given, resolver_id always null, author_id = current user_id
+            const payload = {
+                amount: amount,
+                description: description,
+                type: type,
+                resolver_id: null,
+                author_id: user.user_id
+            };
 
-                    const amount = parseFloat(document.getElementById('amount').value);
-                    const type = document.getElementById('type').value;
-                    const description = document.getElementById('description').value.trim() || null;
-                    const user = getCurrentUser();
-
-                    if (!amount || amount < 0.01 || !type) {
-                        statusEl.textContent = 'Please fill in amount and reason.';
-                        statusEl.classList.add('is-error');
-                        return;
-                    }
-
-                    // Payload matches the HTML comment:
-                    // default status (backend), amount given, description given or null,
-                    // type given, resolver_id always null, author_id = current user_id
-                    const payload = {
-                        amount: amount,
-                        description: description,
-                        type: type,
-                        resolver_id: null,
-                        author_id: user.user_id
-                    };
-
-                    try {
-                        const result = await api('/Reimbursements', {
-                            method: 'POST',
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (result.ok) {
-                            statusEl.textContent = 'Request submitted.';
-                            form.reset();
-                            // Optional: send user to My requests
-                            // window.location.href = 'my-requests.html';
-                        } else {
-                            statusEl.textContent = 'Could not submit request.';
-                            statusEl.classList.add('is-error');
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        statusEl.textContent = 'Could not submit request.';
-                        statusEl.classList.add('is-error');
-                    }
+            try {
+                const result = await api('/Reimbursements', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
                 });
-            });
-        </script>
-    </body>
+
+                if (result.ok) {
+                    statusEl.textContent = 'Request submitted.';
+                    form.reset();
+                    // Optional: send user to My requests
+                    // window.location.href = 'my-requests.html';
+                } else {
+                    statusEl.textContent = 'Could not submit request.';
+                    statusEl.classList.add('is-error');
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Could not submit request.';
+                statusEl.classList.add('is-error');
+            }
+        });
+    });
+</script>
+</body>
 </html>
 <!-- 1. Make it so the approvals.html link (line 15) is only accessible if the current user is a manager (role = true)
 2. If the submit button is pressed and both required fields are filled, create a new reimbursement record. it should utilize the
