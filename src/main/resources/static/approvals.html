@@ -41,6 +41,23 @@
             <!-- filled by JS -->
         </div>
     </section>
+
+    <section class="panel" style="margin-top: 32px;">
+        <div class="panel-head">
+            <h1>Promote to manager</h1>
+            <p class="panel-sub">Give an employee manager access.</p>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="promote-user-select">Employee</label>
+                <select id="promote-user-select"></select>
+            </div>
+            <div class="field" style="justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" id="promote-btn">Promote</button>
+            </div>
+        </div>
+        <p class="edit-error" id="promote-status" hidden></p>
+    </section>
 </main>
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
@@ -151,6 +168,67 @@
             }
         });
 
+        // ---------- Promote to manager ----------
+        const promoteSelect = document.getElementById('promote-user-select');
+        const promoteBtn = document.getElementById('promote-btn');
+        const promoteStatus = document.getElementById('promote-status');
+
+        async function loadEmployees() {
+            const result = await api('/Users');
+            promoteSelect.innerHTML = '';
+            if (result.ok && Array.isArray(result.body)) {
+                const employees = result.body.filter(function (u) { return u.role === false; });
+                if (employees.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = 'No employees to promote';
+                    opt.disabled = true;
+                    promoteSelect.appendChild(opt);
+                    promoteBtn.disabled = true;
+                    return;
+                }
+                promoteBtn.disabled = false;
+                employees.forEach(function (u) {
+                    const opt = document.createElement('option');
+                    opt.value = u.user_id;
+                    opt.textContent = u.first_name + ' ' + u.last_name + ' (' + u.username + ')';
+                    promoteSelect.appendChild(opt);
+                });
+            }
+        }
+
+        promoteBtn.addEventListener('click', async function () {
+            const userId = promoteSelect.value;
+            if (!userId) return;
+            promoteStatus.hidden = true;
+            promoteBtn.disabled = true;
+
+            try {
+                const result = await api('/Users/' + userId + '/role', {
+                    method: 'PUT',
+                    body: JSON.stringify({ role: true })
+                });
+
+                if (result.ok) {
+                    promoteStatus.textContent = 'Promoted successfully.';
+                    promoteStatus.style.color = 'var(--green)';
+                    promoteStatus.hidden = false;
+                    await loadEmployees();
+                } else {
+                    promoteStatus.style.color = 'var(--red)';
+                    promoteStatus.textContent = 'Could not promote user.';
+                    promoteStatus.hidden = false;
+                }
+            } catch (err) {
+                console.error(err);
+                promoteStatus.style.color = 'var(--red)';
+                promoteStatus.textContent = 'Could not promote user.';
+                promoteStatus.hidden = false;
+            } finally {
+                promoteBtn.disabled = false;
+            }
+        });
+
+        await loadEmployees();
         await loadByStatuses(['PENDING']);
     });
 </script>
@@ -160,4 +238,5 @@
 2. Finish the implementation. Display every record in Reimbursements where status is 'PENDING'. below each record
 have 2 buttons, 'deny' and 'accept'. after either button is pushed change the status to either 'APPROVED' or 'DENIED' based on which button was
 pressed
-3. Added a Pending/History toggle so managers can view resolved (APPROVED/DENIED) requests too. -->
+3. Added a Pending/History toggle so managers can view resolved (APPROVED/DENIED) requests too.
+4. Added a Promote to Manager section, lets a manager promote any employee via PUT /api/Users/{id}/role. -->

@@ -16,7 +16,7 @@ public class MainClass {
 
         Users user = new Users(2, "NewEmployee", "password2", false,"New", "Employee", 1 );
         userDAO.create(user);
-        
+
         //Update
         UsersDAO userDAO = new UsersDAOImpl();
 
