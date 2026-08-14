@@ -12,9 +12,27 @@ import Model.Users;
 
 public class ReimbursementServiceImpl implements ReimbursementService {
 
-    private final UsersDAO userDAO = new UsersDAOImpl();
+
+
+    private final UsersDAO userDAO;
+    private final ReimbursementDAO reimbursementDAO;
+
+    public ReimbursementServiceImpl() {
+        this.userDAO = new UsersDAOImpl();
+        this.reimbursementDAO = new ReimbursementDAOImpl();
+    }
+
+    public ReimbursementServiceImpl(ReimbursementDAO reimbursementDAO, UsersDAO userDAO) {
+        this.reimbursementDAO = reimbursementDAO;
+        this.userDAO = userDAO;
+    }
+
+
+
+
+
     private static final int MAX_DESCRIPTION_LENGTH = 500;
-    private final ReimbursementDAO reimbursementDAO = new ReimbursementDAOImpl();
+
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("10000.00");
 
     @Override

@@ -8,7 +8,15 @@ import java.util.List;
 
 public class DepartmentServiceImpl implements DepartmentService {
 
-    private final DepartmentDAO departmentDAO = new DepartmentDAOImpl();
+    private final DepartmentDAO departmentDAO;
+
+    public DepartmentServiceImpl() {
+        this.departmentDAO = new DepartmentDAOImpl();
+    }
+
+    public DepartmentServiceImpl(DepartmentDAO departmentDAO) {
+        this.departmentDAO = departmentDAO;
+    }
 
 
     @Override

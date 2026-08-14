@@ -9,7 +9,16 @@ import java.util.List;
 
 public class UsersServiceImpl implements UsersService{
 
-    private final UsersDAO userDAO = new UsersDAOImpl();
+    private final UsersDAO userDAO;
+
+    public UsersServiceImpl() {
+        this.userDAO = new UsersDAOImpl();
+    }
+
+    public UsersServiceImpl(UsersDAO userDAO) {
+        this.userDAO = userDAO;
+    }
+
     @Override
     public Users create(Users user) {
         if(user.getFirst_name() == null || user.getFirst_name().isEmpty() || user.getLast_name() == null || user.getLast_name().isEmpty()){
