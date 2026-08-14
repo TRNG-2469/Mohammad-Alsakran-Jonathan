@@ -54,6 +54,7 @@
                 const form = document.getElementById('login-form');
                 const errorEl = document.getElementById('login-error');
 
+                // Handle sign-in form submission
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     errorEl.hidden = true;
@@ -61,11 +62,13 @@
                     const username = document.getElementById('username').value.trim();
                     const password = document.getElementById('password').value;
 
+                    // Require both fields before attempting login
                     if (!username || !password) {
                         errorEl.hidden = false;
                         return;
                     }
 
+                    // Send credentials via HTTP Basic Auth header
                     try {
                         // POST /api/login — backend checks Users table (UsersServiceImpl.logIn)
                         const result = await api('/login', {

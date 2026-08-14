@@ -73,6 +73,7 @@
 </main>
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
+        // Verify session, set up nav/user display, and wire the logout button
         if (!(await requireAuth())) return;
         updateApprovalsNav();
         renderWhoAmI();
@@ -81,16 +82,19 @@
         const form = document.getElementById('reimb-form');
         const statusEl = document.getElementById('reimb-status');
 
+        // Handle new reimbursement submission
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             statusEl.textContent = '';
             statusEl.classList.remove('is-error');
 
+            // Read form values
             const amount = parseFloat(document.getElementById('amount').value);
             const type = document.getElementById('type').value;
             const description = document.getElementById('description').value.trim() || null;
             const user = getCurrentUser();
 
+            // Require a valid amount and a chosen type
             if (!amount || amount < 0.01 || !type) {
                 statusEl.textContent = 'Please fill in amount and reason.';
                 statusEl.classList.add('is-error');
@@ -108,6 +112,7 @@
                 author_id: user.user_id
             };
 
+            // Submit the new reimbursement and reset the form on success
             try {
                 const result = await api('/Reimbursements', {
                     method: 'POST',

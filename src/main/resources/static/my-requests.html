@@ -50,6 +50,7 @@
 </main>
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
+        // Verify session, set up nav/user display, and wire the logout button
         if (!(await requireAuth())) return;
         updateApprovalsNav();
         renderWhoAmI();
@@ -59,10 +60,13 @@
         const statusFilter = document.getElementById('status-filter');
         const user = getCurrentUser();
 
+        // Enable inline editing of PENDING requests
         wireEditHandlers(listEl, user);
 
+        // Holds every request loaded from the server (unfiltered)
         let allItems = [];
 
+        // Re-render the list based on the currently selected status filter
         function render() {
             const selected = statusFilter.value;
             const items = selected === 'ALL'
@@ -85,6 +89,7 @@
             });
         }
 
+        // Load all of the current user's reimbursements, newest first
         try {
             // Backend route: GET /api/Reimbursements/author/{id}
             const result = await api('/Reimbursements/author/' + user.user_id);
@@ -105,6 +110,7 @@
             showEmptyState(listEl, 'Could not load your requests.');
         }
 
+        // Re-render whenever the status filter changes
         statusFilter.addEventListener('change', render);
     });
 </script>

@@ -6,15 +6,18 @@
  * GET /api/me before trusting it.
  */
 
+// Base URL for all backend API calls
 const API_BASE = 'http://localhost:7700/api';
 
 // ---------- Auth helpers ----------
 
+// Read the cached logged-in user out of localStorage
 function getCurrentUser() {
     const raw = localStorage.getItem('currentUser');
     return raw ? JSON.parse(raw) : null;
 }
 
+// Cache the logged-in user in localStorage (never store the password)
 function setCurrentUser(user) {
     // Backend already nulls the password on login; keep it out of storage.
     if (user && user.password) {
@@ -23,33 +26,40 @@ function setCurrentUser(user) {
     localStorage.setItem('currentUser', JSON.stringify(user));
 }
 
+// Remove the cached user from localStorage
 function clearCurrentUser() {
     localStorage.removeItem('currentUser');
 }
 
+// Check whether the cached current user has manager role
 function isManager() {
     const user = getCurrentUser();
     return !!(user && user.role === true);
 }
 
-/** Redirect to login if there is no real server session. Call at top of protected pages. */
+// Redirect to login if there is no real server session. Call at top of protected pages.
 async function requireAuth() {
+    // Ask the backend who the current session belongs to
     const result = await api('/me');
     if (!result.ok) {
+        // No valid session: clear local cache and bounce to login
         clearCurrentUser();
         window.location.href = 'login.html';
         return false;
     }
+    // Valid session: refresh local cache with server's copy
     setCurrentUser(result.body);
     return true;
 }
 
+// Log the user out server-side and locally, then redirect to login
 async function logOut() {
     await api('/logout', { method: 'POST' });
     clearCurrentUser();
     window.location.href = 'login.html';
 }
 
+// Fill in the "who am I" name/role display in the nav bar
 function renderWhoAmI() {
     const user = getCurrentUser();
     const nameEl = document.getElementById('whoami-name');
@@ -67,6 +77,7 @@ function renderWhoAmI() {
  * Matches the requirement on reimbursements.html, my-requests.html, approvals.html.
  */
 function updateApprovalsNav() {
+    // Show/hide every Approvals nav link based on manager status
     document.querySelectorAll('a.tab[href="approvals.html"]').forEach(function (link) {
         if (!isManager()) {
             link.style.display = 'none';
@@ -80,6 +91,8 @@ function updateApprovalsNav() {
 
 // ---------- Generic fetch helper ----------
 
+// Wrapper around fetch() that prefixes API_BASE, sets JSON headers,
+// and safely parses the response body (JSON or plain text)
 async function api(path, options) {
     const opts = options || {};
     opts.headers = Object.assign(
@@ -101,6 +114,7 @@ async function api(path, options) {
 
 // ---------- Receipt card renderer (used by my-requests & approvals) ----------
 
+// Format a number as a 2-decimal money string
 function formatAmount(n) {
     return Number(n).toFixed(2);
 }
@@ -116,16 +130,20 @@ function formatAmount(n) {
  *                amount / type / description.
  */
 function buildReceiptCard(reimb, showActions, showEdit) {
+    // Pull out and normalize the fields we need to render
     const id = reimb.reimbursements_id;
     const status = (reimb.status || 'PENDING').toUpperCase();
     const type = (reimb.type || '').toUpperCase();
     const desc = reimb.description || '';
     const canEdit = !!showEdit && status === 'PENDING';
 
+    // Create the card container
     const card = document.createElement('article');
     card.className = 'receipt-card';
     card.dataset.id = id;
 
+    // Build the card markup: header/amount, description, meta row,
+    // optional accept/deny actions, and optional inline edit form
     card.innerHTML =
         '<div class="receipt-perforation" aria-hidden="true"></div>' +
         '<div class="receipt-body">' +
@@ -178,11 +196,13 @@ function buildReceiptCard(reimb, showActions, showEdit) {
  * Delegated, so it works even as cards get added/removed.
  */
 function wireEditHandlers(listEl, user) {
+    // Single delegated click listener handles edit/cancel/save for every card
     listEl.addEventListener('click', async function (e) {
         const editBtn = e.target.closest('button[data-action="edit"]');
         const cancelBtn = e.target.closest('.edit-cancel');
         const saveBtn = e.target.closest('.edit-save');
 
+        // Reveal the inline edit form for this card
         if (editBtn) {
             const card = editBtn.closest('.receipt-card');
             card.querySelector('.edit-form').hidden = false;
@@ -190,6 +210,7 @@ function wireEditHandlers(listEl, user) {
             return;
         }
 
+        // Hide the edit form and restore the normal action buttons
         if (cancelBtn) {
             const card = cancelBtn.closest('.receipt-card');
             card.querySelector('.edit-form').hidden = true;
@@ -197,6 +218,7 @@ function wireEditHandlers(listEl, user) {
             return;
         }
 
+        // Validate and submit the edited reimbursement
         if (saveBtn) {
             const id = saveBtn.dataset.id;
             const card = saveBtn.closest('.receipt-card');
@@ -204,10 +226,12 @@ function wireEditHandlers(listEl, user) {
             const errorEl = form.querySelector('.edit-error');
             errorEl.hidden = true;
 
+            // Read the edited values out of the form
             const amount = parseFloat(form.querySelector('.edit-amount').value);
             const type = form.querySelector('.edit-type').value;
             const description = form.querySelector('.edit-description').value.trim();
 
+            // Basic client-side validation before hitting the API
             if (!amount || amount < 0.01 || !type) {
                 errorEl.textContent = 'Amount and type are required.';
                 errorEl.hidden = false;
@@ -216,6 +240,7 @@ function wireEditHandlers(listEl, user) {
 
             saveBtn.disabled = true;
 
+            // Send the update, then reload on success or show an error
             try {
                 const result = await api('/Reimbursements/' + id, {
                     method: 'PUT',
@@ -244,6 +269,7 @@ function wireEditHandlers(listEl, user) {
     });
 }
 
+// Escape special HTML characters to safely inject text into innerHTML
 function escapeHtml(str) {
     return String(str)
         .replace(/&/g, '&amp;')
@@ -252,6 +278,7 @@ function escapeHtml(str) {
         .replace(/"/g, '&quot;');
 }
 
+// Replace a list container's contents with a placeholder "nothing here" message
 function showEmptyState(container, message) {
     container.innerHTML = '';
     const empty = document.createElement('div');

@@ -80,6 +80,7 @@
 </main>
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
+        // Already logged in: skip registration and go straight to the app
         if (getCurrentUser()) {
             window.location.href = 'reimbursements.html';
             return;
@@ -106,10 +107,12 @@
             console.error('Failed to load departments', err);
         }
 
+        // Handle registration form submission
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             errorEl.hidden = true;
 
+            // Read and trim all field values
             const username = document.getElementById('username').value.trim();
             const firstName = document.getElementById('first_name').value.trim();
             const lastName = document.getElementById('last_name').value.trim();
@@ -117,9 +120,11 @@
             const confirm = document.getElementById('confirm_password').value;
             const departmentId = parseInt(deptSelect.value, 10);
 
+            // Bail out if any required field is missing
             if (!username || !firstName || !lastName || !password || !confirm || !departmentId) {
                 return; // browser required attributes already enforce most of this
             }
+            // Passwords must match before continuing
             if (password !== confirm) {
                 errorEl.textContent = 'Passwords do not match.';
                 errorEl.hidden = false;
@@ -154,6 +159,7 @@
                 department_id: departmentId
             };
 
+            // Submit the new user and redirect on success
             try {
                 const createResult = await api('/Users', {
                     method: 'POST',

@@ -75,6 +75,7 @@
 </main>
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
+        // Verify session before doing anything else
         if (!(await requireAuth())) return;
 
         // Managers only
@@ -94,6 +95,7 @@
         // to the backend (Reimbursement records don't carry department_id).
         let authorDeptMap = {};
 
+        // Populate the department filter dropdown from the Department table
         async function loadDepartmentOptions() {
             try {
                 const result = await api('/Departments');
@@ -110,6 +112,7 @@
             }
         }
 
+        // Build a lookup of author_id -> department_id for client-side filtering
         async function loadAuthorDeptMap() {
             try {
                 const result = await api('/Users');
@@ -124,6 +127,7 @@
             }
         }
 
+        // Sort items newest-first and render them as receipt cards
         function renderItems(items) {
             listEl.innerHTML = '';
 
@@ -143,6 +147,7 @@
             });
         }
 
+        // Fetch reimbursements matching the current status/department filters
         async function loadItems() {
             listEl.innerHTML = '';
             const status = statusFilter.value; // PENDING | APPROVED | DENIED | HISTORY | ALL
@@ -193,6 +198,7 @@
             const newStatus = action === 'accept' ? 'APPROVED' : 'DENIED';
             const user = getCurrentUser();
 
+            // Disable buttons on this card while the request is in flight
             const card = btn.closest('.receipt-card');
             card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
 
@@ -223,6 +229,7 @@
             }
         });
 
+        // Reload the list whenever a filter dropdown changes
         statusFilter.addEventListener('change', loadItems);
         departmentFilter.addEventListener('change', loadItems);
 
@@ -231,6 +238,7 @@
         const promoteBtn = document.getElementById('promote-btn');
         const promoteStatus = document.getElementById('promote-status');
 
+        // Populate the "promote to manager" dropdown with current employees
         async function loadEmployees() {
             const result = await api('/Users');
             promoteSelect.innerHTML = '';
@@ -254,6 +262,7 @@
             }
         }
 
+        // Promote the selected employee to manager
         promoteBtn.addEventListener('click', async function () {
             const userId = promoteSelect.value;
             if (!userId) return;
@@ -286,6 +295,7 @@
             }
         });
 
+        // Initial page load: departments, author->department map, employees, then the list itself
         await loadDepartmentOptions();
         await loadAuthorDeptMap();
         await loadEmployees();
