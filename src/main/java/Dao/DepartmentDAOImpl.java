@@ -1,7 +1,6 @@
 package Dao;
 
 import Model.Department;
-import Model.Users;
 import Utils.ConnectionFactory;
 
 import java.sql.Connection;

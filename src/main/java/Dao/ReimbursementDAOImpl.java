@@ -13,7 +13,7 @@ import java.util.List;
 public class ReimbursementDAOImpl implements ReimbursementDAO {
     @Override
     public Reimbursement create(Reimbursement reimbursement) {
-        String createSQL = "INSERT INTO reimbursements ( status, amount, description, type, resolver_id,author_id) VALUES ( ?, ?, ?, ?, ?,?) RETURNING reimbursements_id";
+        String createSQL = "INSERT INTO reimbursements (status, amount, description, type, resolver_id,author_id) VALUES ( ?, ?, ?, ?, ?,?) RETURNING reimbursements_id";
 
         try (Connection conn = ConnectionFactory.getInstance().getConnection();
              PreparedStatement prepStatement = conn.prepareStatement(createSQL)) {
