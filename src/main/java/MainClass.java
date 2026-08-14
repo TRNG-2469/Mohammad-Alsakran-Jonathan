@@ -137,13 +137,13 @@ public class MainClass {
 
             logger.warn("Validation error", e);
             ctx.status(400);
-            ctx.json(new ErrorResponse("An unexpected Error occured."));
+            ctx.json(new ErrorResponse("An unexpected Error occurred."));
         });
 
         app.exception(Exception.class, (e, ctx) -> {
             logger.error("Unexpected error", e);
             ctx.status(500);
-            ctx.json(new ErrorResponse("An unexpected Server Error occured."));
+            ctx.json(new ErrorResponse("An unexpected Server Error occurred."));
         });
     }
 }
