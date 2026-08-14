@@ -1,3 +1,4 @@
+```mermaid
 erDiagram
     DEPARTMENTS ||--o{ USERS : "has"
     USERS ||--o{ REIMBURSEMENTS : "submits (author)"
@@ -27,3 +28,4 @@ erDiagram
         int resolver_id FK
         int author_id FK
     }
+```
